@@ -2,10 +2,13 @@ import { Module, CacheModule, CacheInterceptor } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from '@hapi/joi';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ProjectModule } from './project/project.module';
 import { ComponentModule } from './component/component.module';
+import { Connection } from 'typeorm';
+import { User } from './user/domain/user';
 
 @Module({
     imports: [ConfigModule.forRoot({
@@ -26,6 +29,17 @@ import { ComponentModule } from './component/component.module';
     }), CacheModule.register({
         ttl: 5, // seconds
         max: 10, // maximum number of items in cache
+    }),
+    TypeOrmModule.forRoot({
+        type: 'mongodb',
+        host: 'localhost',
+        port: 27017,
+        database: 'mcim',
+        entities: [User],
+        synchronize: true,
+        useNewUrlParser: true,
+        logging: true,
+        useUnifiedTopology: true
     }), AuthModule, UserModule, ProjectModule, ComponentModule],
     controllers: [],
     providers: [{
@@ -33,4 +47,6 @@ import { ComponentModule } from './component/component.module';
         useClass: CacheInterceptor,
     }],
 })
-export class AppModule { }
+export class AppModule {
+    constructor(private readonly connection: Connection) { }
+}

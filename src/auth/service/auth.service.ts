@@ -19,9 +19,8 @@ export class AuthService {
      * @param user The user which should be registered.
      * @returns The registered user.
      */
-    async register(user: User) {
-        this.userService.addToUsers(user);
-        return user;
+    async register(user: User): Promise<User> {
+        return await this.userService.addToUsers(user);
     }
 
     /**

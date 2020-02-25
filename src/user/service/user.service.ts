@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { User } from '../domain/user';
+import { MongoRepository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 /**
  * Service for the user's domain
@@ -7,30 +9,32 @@ import { User } from '../domain/user';
 @Injectable()
 export class UserService {
 
-    private readonly users: User[] = [];
+    constructor(
+        @InjectRepository(User)
+        private readonly userRepository: MongoRepository<User>,
+    ) { }
 
-    constructor() {
-        this.users.push({
-            username: 'raccoon',
-            password: 'raccoon1234',
-            email: 'raccoon@mcim.com',
-            userId: '4214325'
-        });
-    }
-
-    addToUsers(user: User) {
-        // TODO refactor and use library to prevent code duplicates 
-        for (let i = 0; i < this.users.length; i++) {
-            const u: User = this.users[i];
-            if (u.username === user.username) {
-                throw new BadRequestException();
-            }
+    /**
+     * Creates a new user entry in the database if the user does not already exists.
+     * @param user The user which should be added to the database.
+     * @returns The user object created in the database.
+     * @throws BadRequestException if user already exists.
+     */
+    async addToUsers(user: User): Promise<User> {
+        const number = await this.userRepository.count({ username: user.username });
+        if (number > 0) {
+            throw new BadRequestException();
         }
-        this.users.push(user);
+        return await this.userRepository.save(user);
     }
 
+    /**
+     * Finds the first entity with the given username in the db.
+     * @param username The user's name.
+     * @returns The user with the given username if exists otherwise undefined.
+     */
     async findOne(username: string): Promise<User | undefined> {
-        return this.users.find(user => user.username === username);
+        return this.userRepository.findOne({ username: username });
     }
 
 }
