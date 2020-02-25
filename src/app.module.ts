@@ -1,6 +1,4 @@
 import { Module, CacheModule, CacheInterceptor } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from '@hapi/joi';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -18,6 +16,8 @@ import { ComponentModule } from './component/component.module';
                 .valid('development', 'production', 'test', 'provision')
                 .default('development'),
             PORT: Joi.number().default(3000),
+            VALIDATION_ERROR_MESSAGES: Joi.boolean().default(true),
+            SECRET: Joi.string()
         }),
         validationOptions: {
             allowUnknown: true,
@@ -27,8 +27,8 @@ import { ComponentModule } from './component/component.module';
         ttl: 5, // seconds
         max: 10, // maximum number of items in cache
     }), AuthModule, UserModule, ProjectModule, ComponentModule],
-    controllers: [AppController],
-    providers: [AppService, {
+    controllers: [],
+    providers: [{
         provide: APP_INTERCEPTOR,
         useClass: CacheInterceptor,
     }],

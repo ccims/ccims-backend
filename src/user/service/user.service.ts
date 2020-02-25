@@ -1,6 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { User } from '../domain/user';
 
+/**
+ * Service for the user's domain
+ */
 @Injectable()
 export class UserService {
 
