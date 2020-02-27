@@ -5,6 +5,7 @@ import { ProjectOwnerPipe } from '../pipe/project.pipe';
 import { Project } from '../domain/project';
 import { User } from 'src/user/domain/user';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { UsernameAuthGuard } from 'src/auth/guard/username-auth.guard';
 
 /**
  * Controller for 'projects' API.
@@ -23,6 +24,7 @@ export class ProjectController {
      * @returns The project that is created.
      */
     @Post()
+    @UseGuards(UsernameAuthGuard)
     async create(@Body(ProjectOwnerPipe) project: ProjectDto): Promise<Project> {
         const owner: any = project.owner;
         return this.projectService.createProject({
@@ -39,6 +41,7 @@ export class ProjectController {
      * @returns The project with the given name.
      */
     @Get(':name')
+    @UseGuards(UsernameAuthGuard)
     async getProjectByName(@Param('name') name: string): Promise<Project> {
         return this.projectService.findOne(name);
     }
@@ -49,6 +52,7 @@ export class ProjectController {
      * @returns The project that is deleted.
      */
     @Delete(':name')
+    @UseGuards(UsernameAuthGuard)
     async deleteProjectByName(@Param('name') name: string): Promise<Project> {
         return this.projectService.deleteProjectByName(name);
     }
