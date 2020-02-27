@@ -4,7 +4,7 @@ import { MongoRepository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 /**
- * Service for the user's domain
+ * Service for the user's domain.
  */
 @Injectable()
 export class UserService {
@@ -20,10 +20,10 @@ export class UserService {
      * @returns The user object created in the database.
      * @throws BadRequestException if user already exists.
      */
-    async addToUsers(user: User): Promise<User> {
+    async createUser(user: User): Promise<User> {
         const number = await this.userRepository.count({ username: user.username });
         if (number > 0) {
-            throw new BadRequestException();
+            throw new BadRequestException('User already exists');
         }
         return await this.userRepository.save(user);
     }
@@ -31,10 +31,15 @@ export class UserService {
     /**
      * Finds the first entity with the given username in the db.
      * @param username The user's name.
-     * @returns The user with the given username if exists otherwise undefined.
+     * @returns The user with the given username if exists.
+     * @throws BadRequestException if user does not exists.
      */
-    async findOne(username: string): Promise<User | undefined> {
-        return this.userRepository.findOne({ username: username });
+    async findOne(username: string): Promise<User> {
+        const user: User = await this.userRepository.findOne({ username: username });
+        if (!user) {
+            throw new BadRequestException(`User ${username} does not exists`);
+        }
+        return user;
     }
 
 }

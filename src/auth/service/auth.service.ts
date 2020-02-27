@@ -20,7 +20,7 @@ export class AuthService {
      * @returns The registered user.
      */
     async register(user: User): Promise<User> {
-        return await this.userService.addToUsers(user);
+        return await this.userService.createUser(user);
     }
 
     /**

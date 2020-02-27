@@ -1,19 +1,41 @@
+import { Entity, Column, ObjectIdColumn } from "typeorm";
+import { User } from "src/user/domain/user";
+
 /**
- * Multi-component project
+ * Multi-component project.
  * 
  * Project contains multiple components which representing e.g. microservices in a microservice architecture.
  */
+@Entity()
 export class Project {
+
+    /**
+     * The unique id given by mongoDB to the project
+     */
+    @ObjectIdColumn()
+    _id?: string;
+
     /**
      * The name of the project
      */
+    @Column()
     name: string;
+
     /**
-     * The name of the owner of the project
+     * The display name of the project
      */
-    ownerName: string;
+    @Column()
+    displayName: string;
+
     /**
-     * Names of all contributors of the project
+     * The owner of the project
      */
-    contributorNames: string[];
+    @Column()
+    owner: User;
+
+    /**
+     * All contributors of the project
+     */
+    @Column()
+    contributors: User[];
 }

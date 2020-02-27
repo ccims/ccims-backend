@@ -1,8 +1,8 @@
-import { IsEmail, IsNotEmpty, MinLength, IsAlphanumeric } from 'class-validator';
+import { IsEmail, IsNotEmpty, MinLength, Matches } from 'class-validator';
 
 export class UserRegistrationCredentialDto {
     @IsNotEmpty()
-    @IsAlphanumeric()
+    @Matches(/^([a-zA-z]+[0-9]*)+$/)
     username: string;
 
     @IsNotEmpty()
