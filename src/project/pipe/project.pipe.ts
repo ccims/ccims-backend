@@ -2,6 +2,9 @@ import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 import { User } from 'src/user/domain/user';
 import { UserService } from 'src/user/service/user.service';
 
+/**
+ * Pipe to transform the project's owner from ownername to the owner's user entity.
+ */
 @Injectable()
 export class ProjectOwnerPipe implements PipeTransform {
 

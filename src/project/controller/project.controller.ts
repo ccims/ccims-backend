@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Delete, Patch, UsePipes } from '@nestjs/common';
 import { ProjectService } from '../service/project.service';
 import { ProjectDto } from '../dto/project.dto';
 import { ProjectOwnerPipe } from '../pipe/project.pipe';
@@ -6,6 +6,9 @@ import { Project } from '../domain/project';
 import { User } from 'src/user/domain/user';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { UsernameAuthGuard } from 'src/auth/guard/username-auth.guard';
+import { ContributorDto } from 'src/user/dto/contributor.dto';
+import { Contributor } from 'src/user/domain/contributor';
+import { ProjectContributorPipe } from '../pipe/project-contributor.pipe';
 
 /**
  * Controller for 'projects' API.
@@ -27,11 +30,12 @@ export class ProjectController {
     @UseGuards(UsernameAuthGuard)
     async create(@Body(ProjectOwnerPipe) project: ProjectDto): Promise<Project> {
         const owner: any = project.owner;
+        const contributor: Contributor = { username: (owner as User).username };
         return this.projectService.createProject({
             name: project.name,
             displayName: project.displayName,
             owner: owner as User,
-            contributors: [owner as User],
+            contributors: [contributor],
         });
     }
 
@@ -55,5 +59,12 @@ export class ProjectController {
     @UseGuards(UsernameAuthGuard)
     async deleteProjectByName(@Param('name') name: string): Promise<Project> {
         return this.projectService.deleteProjectByName(name);
+    }
+
+    @Patch(':name')
+    @UseGuards(UsernameAuthGuard)
+    @UsePipes(ProjectContributorPipe)
+    async addContributor(@Param('name') projectName: string, @Body() contributor: ContributorDto) {
+        return await this.projectService.addAsContributorToProject(projectName, contributor);
     }
 }

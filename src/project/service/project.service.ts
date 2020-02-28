@@ -2,6 +2,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { Project } from '../domain/project';
 import { MongoRepository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Contributor } from 'src/user/domain/contributor';
+import * as _ from "lodash";
 
 /**
  * Service for the project's domain.
@@ -25,7 +27,7 @@ export class ProjectService {
         if (number > 0) {
             throw new BadRequestException('Project already exists');
         }
-        return await this.projectRepository.save(project);
+        return await this.updateOrCreateProject(project);
     }
 
     /**
@@ -51,5 +53,30 @@ export class ProjectService {
         const deleted: Project = await this.findOne(name);
         await this.projectRepository.deleteOne({ name: name });
         return deleted;
+    }
+
+    /**
+     * Adds a user as contributor to a project.
+     * @param projectName The project's name.
+     * @param contributor The user to be added as contributor.
+     * @returns The updated project if the user was no contributor.
+     * @throws BadRequestException if the user is already contributor to the project.
+     */
+    async addAsContributorToProject(projectName: string, contributor: Contributor) {
+        const project: Project = await this.findOne(projectName);
+        if (_.some(project.contributors, contributor)) {
+            throw new BadRequestException(`User ${contributor.username} is already contributor of ${projectName}`);
+        };
+        project.contributors.push(contributor);
+        return await this.updateOrCreateProject(project);
+    }
+
+    /**
+     * Updates or adds a given project to the database.
+     * @param project The project to be added or updated.
+     * @returns The added/updated project.
+     */
+    private async updateOrCreateProject(project: Project) {
+        return await this.projectRepository.save(project);
     }
 }

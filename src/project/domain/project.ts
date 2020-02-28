@@ -1,5 +1,6 @@
 import { Entity, Column, ObjectIdColumn } from "typeorm";
 import { User } from "src/user/domain/user";
+import { Contributor } from "src/user/domain/contributor";
 
 /**
  * Multi-component project.
@@ -37,5 +38,5 @@ export class Project {
      * All contributors of the project
      */
     @Column()
-    contributors: User[];
+    contributors: Contributor[];
 }
