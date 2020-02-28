@@ -31,7 +31,7 @@ export class ProjectController {
             name: project.name,
             displayName: project.displayName,
             owner: owner as User,
-            contributors: [],
+            contributors: [owner as User],
         });
     }
 
