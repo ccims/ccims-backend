@@ -3,6 +3,7 @@ import { MongoRepository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/project/domain/project';
 import { User } from '../domain/user';
+import { Contributor } from '../domain/contributor';
 
 /**
  * Service for the user's domain.
@@ -53,6 +54,15 @@ export class UserService {
         const user: User = await this.findOne(username);
         user.projects.push(project);
         return await this.userRepository.save(user);
+    }
+
+    /**
+     * Adds a new contributor to the project entity of all user that contributes to the given project.
+     * @param projectName The project's name the user contributes to.
+     * @param contributor The contributor's name which shoud be added to the user's project.
+     */
+    async addContributorToOtherUsersOfProject(projectName: string, contributor: Contributor) {
+        this.userRepository.updateMany({ projects: { $elemMatch: { name: projectName } } }, { $addToSet: { "projects.$.contributors": contributor } });
     }
 
     /**

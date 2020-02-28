@@ -5,6 +5,7 @@ import * as _ from "lodash";
 import { Project } from '../domain/project';
 import { Contributor } from 'src/user/domain/contributor';
 import { UserService } from 'src/user/service/user.service';
+import { User } from 'src/user/domain/user';
 
 /**
  * Service for the project's domain.
@@ -29,7 +30,7 @@ export class ProjectService {
         if (number > 0) {
             throw new BadRequestException('Project already exists');
         }
-        return await this.updateOrCreateProject(project);
+        return await this.createProjectTransaction(project);
     }
 
     /**
@@ -91,7 +92,8 @@ export class ProjectService {
         try {
             // execute some operations on this transaction:
             await this.userService.addProjectToUser(project, contributor.username);
-            await this.updateOrCreateProject(project);
+            await this.userService.addContributorToOtherUsersOfProject(project.name, contributor);
+            await this.projectRepository.save(project);
             // commit transaction now:
             await queryRunner.commitTransaction();
         } catch (error) {
@@ -100,6 +102,30 @@ export class ProjectService {
             throw new BadRequestException(`Contributor ${contributor.username} could not be added to ${project.name}`);
         } finally {
             // release query runner which is manually created:
+            await queryRunner.release();
+        }
+    }
+
+    /**
+     * Database transaction to create a project and add it to the owner.
+     * @param project The project which should be created.
+     * @returns The created project.
+     * @throws BadRequestException if some error happens during the transaction
+     */
+    private async createProjectTransaction(project: Project) {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            const createdProject: Project = await this.projectRepository.save(project);
+            await this.addContributorTransaction(project, { username: project.owner.username });
+            await queryRunner.commitTransaction();
+            return createdProject;
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`Project ${project.name} could not be created`);
+        } finally {
             await queryRunner.release();
         }
     }
@@ -124,14 +150,5 @@ export class ProjectService {
         } finally {
             await queryRunner.release();
         }
-    }
-
-    /**
-     * Updates or adds a given project to the database.
-     * @param project The project to be added or updated.
-     * @returns The added/updated project.
-     */
-    private async updateOrCreateProject(project: Project) {
-        return await this.projectRepository.save(project);
     }
 }
