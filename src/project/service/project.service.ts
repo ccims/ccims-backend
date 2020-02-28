@@ -47,14 +47,14 @@ export class ProjectService {
     }
 
     /**
-     * Deletes the project with given name.
+     * Deletes the project with given name and removes it from all contributors.
      * @param name The project's name.
      * @returns The project which is deleted.
      */
     async deleteProjectByName(name: string): Promise<Project> {
-        const deleted: Project = await this.findOne(name);
-        await this.projectRepository.deleteOne({ name: name });
-        return deleted;
+        const project: Project = await this.findOne(name);
+        await this.deleteProjectTransaction(project);
+        return project;
     }
 
     /**
@@ -100,6 +100,28 @@ export class ProjectService {
             throw new BadRequestException(`Contributor ${contributor.username} could not be added to ${project.name}`);
         } finally {
             // release query runner which is manually created:
+            await queryRunner.release();
+        }
+    }
+
+    /**
+     * Database transaction to deletes a project and remove it from all contributors.
+     * @param project The project to be deleted.
+     * @throws BadRequestException if some error happens during the transaction.
+     */
+    private async deleteProjectTransaction(project: Project) {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            await this.projectRepository.deleteOne({ name: project.name });
+            project.contributors.forEach(async c => { await this.userService.removeProjectFromUser(project.name, c.username); });
+            await queryRunner.commitTransaction();
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`Project ${project.name} could not be deleted`);
+        } finally {
             await queryRunner.release();
         }
     }

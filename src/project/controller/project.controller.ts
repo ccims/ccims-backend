@@ -18,7 +18,7 @@ import { ProjectContributorPipe } from '../pipe/project-contributor.pipe';
 @UseGuards(JwtAuthGuard)
 export class ProjectController {
     constructor(
-        private readonly projectService: ProjectService
+        private readonly projectService: ProjectService,
     ) { }
 
     /**
@@ -58,7 +58,7 @@ export class ProjectController {
     @Delete(':name')
     @UseGuards(UsernameAuthGuard)
     async deleteProjectByName(@Param('name') name: string): Promise<Project> {
-        return this.projectService.deleteProjectByName(name);
+        return await this.projectService.deleteProjectByName(name);
     }
 
     /**

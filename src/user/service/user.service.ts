@@ -55,4 +55,13 @@ export class UserService {
         return await this.userRepository.save(user);
     }
 
+    /**
+     * Removes a project from a given user.
+     * @param projectName The name of the project which should be removed.
+     * @param username THe user's name.
+     */
+    async removeProjectFromUser(projectName: string, username: string) {
+        this.userRepository.updateOne({ username: username }, { $pull: { projects: { name: projectName } } });
+    }
+
 }
