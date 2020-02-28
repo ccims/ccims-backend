@@ -61,6 +61,12 @@ export class ProjectController {
         return this.projectService.deleteProjectByName(name);
     }
 
+    /**
+     * Adds a user as contributor to a project.
+     * @param projectName The project's name.
+     * @param contributor The contributor which should be added.
+     * @returns The updated project.
+     */
     @Patch(':name')
     @UseGuards(UsernameAuthGuard)
     @UsePipes(ProjectContributorPipe)
