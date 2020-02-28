@@ -23,7 +23,8 @@ export class AuthController {
         return await this.authService.register({
             username: userCredentialDto.username,
             password: userCredentialDto.password,
-            email: userCredentialDto.email
+            email: userCredentialDto.email,
+            projects: []
         });
     }
 

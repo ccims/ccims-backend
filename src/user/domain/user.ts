@@ -1,18 +1,40 @@
 import { Entity, ObjectIdColumn, Column } from "typeorm";
+import { Project } from "src/project/domain/project";
 
+/**
+ * A user of the system.
+ */
 @Entity()
 export class User {
-    @Column()
-    username: string;
-    @Column()
-    password: string;
-    @Column()
-    email: string;
+
+    /**
+     * The mongoDb id for the user entity.
+     */
     @ObjectIdColumn()
     _id?: string;
 
+    /**
+     * The user's name.
+     */
+    @Column()
+    username: string;
 
+    /**
+     * The user's password.
+     */
+    @Column()
+    password: string;
 
-    // ownedProjectsNames: string[];
-    // contributedProjectsNames: string[];
+    /**
+     * The user's email.
+     */
+    @Column()
+    email: string;
+
+    /**
+     * Projects the user contributes to.
+     */
+    @Column()
+    projects: Project[];
+
 }

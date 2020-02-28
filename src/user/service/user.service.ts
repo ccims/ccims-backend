@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { User } from '../domain/user';
 import { MongoRepository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Project } from 'src/project/domain/project';
+import { User } from '../domain/user';
 
 /**
  * Service for the user's domain.
@@ -40,6 +41,18 @@ export class UserService {
             throw new BadRequestException(`User ${username} does not exists`);
         }
         return user;
+    }
+
+    /**
+     * Adds a given project to a given user.
+     * @param project The project which should be added to the user.
+     * @param username The user's name.
+     * @returns The updated user.
+     */
+    async addProjectToUser(project: Project, username: string): Promise<User> {
+        const user: User = await this.findOne(username);
+        user.projects.push(project);
+        return await this.userRepository.save(user);
     }
 
 }
