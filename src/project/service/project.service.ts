@@ -1,9 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Project } from '../domain/project';
-import { MongoRepository } from 'typeorm';
+import { MongoRepository, getConnection } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Contributor } from 'src/user/domain/contributor';
 import * as _ from "lodash";
+import { Project } from '../domain/project';
+import { Contributor } from 'src/user/domain/contributor';
+import { UserService } from 'src/user/service/user.service';
 
 /**
  * Service for the project's domain.
@@ -13,7 +14,8 @@ export class ProjectService {
 
     constructor(
         @InjectRepository(Project)
-        private readonly projectRepository: MongoRepository<Project>
+        private readonly projectRepository: MongoRepository<Project>,
+        private readonly userService: UserService
     ) { }
 
     /**
@@ -68,7 +70,38 @@ export class ProjectService {
             throw new BadRequestException(`User ${contributor.username} is already contributor of ${projectName}`);
         };
         project.contributors.push(contributor);
-        return await this.updateOrCreateProject(project);
+        await this.addContributorTransaction(project, contributor);
+        return project;
+    }
+
+    /**
+     * Database transaction to add a contributor to a project.
+     * @param project The project on which the contributor should be added.
+     * @param contributor The contributor which should be added.
+     * @throws BadRequestException if some error happens during the transaction.
+     */
+    private async addContributorTransaction(project: Project, contributor: Contributor) {
+        // get a connection and create a new query runner
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        // establish real database connection using our new query runner
+        await queryRunner.connect();
+        // open a new transaction:
+        await queryRunner.startTransaction();
+        try {
+            // execute some operations on this transaction:
+            await this.userService.addProjectToUser(project, contributor.username);
+            await this.updateOrCreateProject(project);
+            // commit transaction now:
+            await queryRunner.commitTransaction();
+        } catch (error) {
+            // since we have errors lets rollback changes we made
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`Contributor ${contributor.username} could not be added to ${project.name}`);
+        } finally {
+            // release query runner which is manually created:
+            await queryRunner.release();
+        }
     }
 
     /**
