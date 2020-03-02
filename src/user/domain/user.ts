@@ -32,9 +32,14 @@ export class User {
     email: string;
 
     /**
-     * Projects the user contributes to.
+     * Names of the projects the user contributes to.
      */
     @Column()
-    projects: Project[];
+    projectNames: string[];
+
+    /**
+     * The projecrs the user contributes to.
+     */
+    projects?: Project[];
 
 }

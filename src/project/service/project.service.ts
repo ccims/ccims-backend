@@ -5,7 +5,6 @@ import * as _ from "lodash";
 import { Project } from '../domain/project';
 import { Contributor } from 'src/user/domain/contributor';
 import { UserService } from 'src/user/service/user.service';
-import { User } from 'src/user/domain/user';
 
 /**
  * Service for the project's domain.
@@ -92,7 +91,7 @@ export class ProjectService {
         try {
             // execute some operations on this transaction:
             await this.userService.addProjectToUser(project, contributor.username);
-            await this.userService.addContributorToOtherUsersOfProject(project.name, contributor);
+            // await this.userService.addContributorToOtherUsersOfProject(project.name, contributor);
             await this.projectRepository.save(project);
             // commit transaction now:
             await queryRunner.commitTransaction();

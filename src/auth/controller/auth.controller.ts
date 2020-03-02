@@ -24,7 +24,7 @@ export class AuthController {
             username: userCredentialDto.username,
             password: userCredentialDto.password,
             email: userCredentialDto.email,
-            projects: []
+            projectNames: []
         });
     }
 

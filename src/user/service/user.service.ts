@@ -3,7 +3,6 @@ import { MongoRepository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/project/domain/project';
 import { User } from '../domain/user';
-import { Contributor } from '../domain/contributor';
 
 /**
  * Service for the user's domain.
@@ -52,26 +51,26 @@ export class UserService {
      */
     async addProjectToUser(project: Project, username: string): Promise<User> {
         const user: User = await this.findOne(username);
-        user.projects.push(project);
+        user.projectNames.push(project.name);
         return await this.userRepository.save(user);
     }
 
-    /**
-     * Adds a new contributor to the project entity of all user that contributes to the given project.
-     * @param projectName The project's name the user contributes to.
-     * @param contributor The contributor's name which shoud be added to the user's project.
-     */
-    async addContributorToOtherUsersOfProject(projectName: string, contributor: Contributor) {
-        this.userRepository.updateMany({ projects: { $elemMatch: { name: projectName } } }, { $addToSet: { "projects.$.contributors": contributor } });
-    }
+    // /**
+    //  * Adds a new contributor to the project entity of all user that contributes to the given project.
+    //  * @param projectName The project's name the user contributes to.
+    //  * @param contributor The contributor's name which shoud be added to the user's project.
+    //  */
+    // async addContributorToOtherUsersOfProject(projectName: string, contributor: Contributor) {
+    //     this.userRepository.updateMany({ projects: { $elemMatch: { name: projectName } } }, { $addToSet: { "projects.$.contributors": contributor } });
+    // }
 
     /**
      * Removes a project from a given user.
      * @param projectName The name of the project which should be removed.
-     * @param username THe user's name.
+     * @param username The user's name.
      */
     async removeProjectFromUser(projectName: string, username: string) {
-        this.userRepository.updateOne({ username: username }, { $pull: { projects: { name: projectName } } });
+        this.userRepository.updateOne({ username: username }, { $pull: { projectNames: projectName } });
     }
 
 }
