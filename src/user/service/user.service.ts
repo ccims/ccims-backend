@@ -1,8 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { MongoRepository } from 'typeorm';
+import { MongoRepository, getConnection } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/project/domain/project';
 import { User } from '../domain/user';
+import _ = require('lodash');
 
 /**
  * Service for the user's domain.
@@ -36,7 +37,7 @@ export class UserService {
      * @throws BadRequestException if user does not exists.
      */
     async findOne(username: string): Promise<User> {
-        const user: User = await this.userRepository.findOne({ username: username });
+        const user: User = await this.findOneTransaction(username);
         if (!user) {
             throw new BadRequestException(`User ${username} does not exists`);
         }
@@ -55,22 +56,42 @@ export class UserService {
         return await this.userRepository.save(user);
     }
 
-    // /**
-    //  * Adds a new contributor to the project entity of all user that contributes to the given project.
-    //  * @param projectName The project's name the user contributes to.
-    //  * @param contributor The contributor's name which shoud be added to the user's project.
-    //  */
-    // async addContributorToOtherUsersOfProject(projectName: string, contributor: Contributor) {
-    //     this.userRepository.updateMany({ projects: { $elemMatch: { name: projectName } } }, { $addToSet: { "projects.$.contributors": contributor } });
-    // }
-
     /**
      * Removes a project from a given user.
      * @param projectName The name of the project which should be removed.
      * @param username The user's name.
      */
     async removeProjectFromUser(projectName: string, username: string) {
-        this.userRepository.updateOne({ username: username }, { $pull: { projectNames: projectName } });
+        await this.userRepository.updateOne({ username: username }, { $pull: { projectNames: projectName } });
+    }
+
+    private async findOneTransaction(username: string): Promise<User> {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            // TODO join and filter directly in database 
+            const users: User[] = await this.userRepository.aggregate([
+                {
+                    $match: { username: username }
+                },
+                {
+                    $lookup: {
+                        from: "project", localField: "projectNames",
+                        foreignField: "name", as: "projects"
+                    }
+                }
+            ]).toArray();
+            const user: User = _.find(users, (u) => { return u.username === username; });
+            await queryRunner.commitTransaction();
+            return user;
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`User ${username} does not exists`);
+        } finally {
+            await queryRunner.release();
+        }
     }
 
 }
