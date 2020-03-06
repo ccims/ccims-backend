@@ -1,11 +1,10 @@
 import { Entity, ObjectIdColumn, Column } from "typeorm";
-import { ObjectId } from "mongodb";
 
 @Entity()
-export class Component {
+export class Interface {
 
     @ObjectIdColumn()
-    _id?: ObjectId;
+    _id?: string;
 
     @Column()
     name: string;
@@ -14,8 +13,12 @@ export class Component {
     displayName: string;
 
     @Column()
-    projectName: string;
+    type: string;
 
     @Column()
-    providedInterfacesNames: string[];
+    componentName: string;
+
+    @Column()
+    projectName: string;
+
 }

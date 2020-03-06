@@ -1,14 +1,17 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Component } from '../domain/component';
-import { MongoRepository } from 'typeorm';
+import { MongoRepository, getConnection } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Interface } from '../domain/interface';
 
 @Injectable()
 export class ComponentService {
 
     constructor(
         @InjectRepository(Component)
-        private readonly componentRepository: MongoRepository<Component>
+        private readonly componentRepository: MongoRepository<Component>,
+        @InjectRepository(Interface)
+        private readonly interfaceRepository: MongoRepository<Interface>
     ) { };
 
     /**
@@ -40,7 +43,92 @@ export class ComponentService {
         return component;
     }
 
+    /**
+     * Gets all components of a given project.
+     * @param projectName The project's name.
+     * @returns List of components of the given project.
+     */
     async getAll(projectName: string): Promise<Component[]> {
         return await this.componentRepository.find({ projectName: projectName });
+    }
+
+    /**
+     * Creates a new interface for a given component in the database.
+     * @param projectName The project's name which the component belongs to.
+     * @param componentName The component's name for which the interface should be created.
+     * @param componentInterface The interface which should be created.
+     */
+    async createInterface(projectName: string, componentName: string, componentInterface: Interface) {
+        const number = await this.interfaceRepository.count({ name: componentInterface.name, componentName: componentInterface.componentName });
+        if (number > 0) {
+            throw new BadRequestException('Interface already exists for this component');
+        }
+        return await this.createInterfaceTransaction(componentInterface, componentName, projectName);
+    }
+
+    /**
+     * Deletes an interface of a given component.
+     * @param projectName The project's name which the component belongs to.
+     * @param componentName The component's name for which the interface should be deleted.
+     * @param interfaceName The name of the interface which should be deleted.
+     */
+    async deleteInterface(projectName: string, componentName: string, interfaceName: string) {
+        const componentInterface: Interface = await this.interfaceRepository.findOne({ name: interfaceName, componentName: componentName, projectName: projectName });
+        if (!componentInterface) {
+            throw new BadRequestException('This interface does not exist');
+        }
+        await this.deleteInterfaceTransaction(interfaceName, componentName, projectName);
+        return componentInterface;
+    }
+
+    /**
+     * Database transaction to delete an interface from a component.
+     * @param interfaceName The interface's id.
+     * @param componentName The component's name.
+     * @param projectName The project's name.
+     * @throws BadRequestException if some error happens during the transaction.
+     */
+    private async deleteInterfaceTransaction(interfaceName: string, componentName: string, projectName: string) {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            await this.interfaceRepository.deleteOne({ name: interfaceName, componentName: componentName, projectName: projectName });
+            await this.componentRepository.updateOne({ name: componentName, projectName: projectName }, { $pull: { providedInterfacesNames: interfaceName } });
+            await queryRunner.commitTransaction();
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`The interface could not be deleted`);
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    /**
+     * Database transaction to create an interface.
+     * @param componentInterface The interface which should be created.
+     * @param componentName The component's name to which the interface belongs to.
+     * @param projectName The project's name which contains the component.
+     * @throws BadRequestException if some error happens during the transaction.
+     */
+    private async createInterfaceTransaction(componentInterface: Interface, componentName: string, projectName: string) {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            const createdInterface: Interface = await this.interfaceRepository.save(componentInterface);
+            const component: Component = await this.findOne(projectName, componentName);
+            component.providedInterfacesNames.push(createdInterface.name);
+            await this.componentRepository.save(component);
+            await queryRunner.commitTransaction();
+            return createdInterface;
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`The interface could not be created`);
+        } finally {
+            await queryRunner.release();
+        }
     }
 }

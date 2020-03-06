@@ -11,6 +11,7 @@ import { Connection } from 'typeorm';
 import { User } from './user/domain/user';
 import { Project } from './project/domain/project';
 import { Component } from './component/domain/component';
+import { Interface } from './component/domain/interface';
 
 @Module({
     imports: [ConfigModule.forRoot({
@@ -37,7 +38,7 @@ import { Component } from './component/domain/component';
         host: 'localhost',
         port: 27017,
         database: 'mcim',
-        entities: [User, Project, Component],
+        entities: [User, Project, Component, Interface],
         synchronize: true,
         useNewUrlParser: true,
         logging: true,

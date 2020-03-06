@@ -6,10 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Component } from './domain/component';
 import { UserModule } from 'src/user/user.module';
 import { ProjectModule } from 'src/project/project.module';
+import { Interface } from './domain/interface';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Component]), UserModule, ProjectModule,
+        TypeOrmModule.forFeature([Component, Interface]), UserModule, ProjectModule,
         JwtModule.register({
             secret: 'some-really-hard-secret', // TODO load secret with service from config file
             signOptions: { expiresIn: '1d' }, // TODO extend expiresIn so that a user is logged in longer

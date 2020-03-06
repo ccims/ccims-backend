@@ -1,9 +1,11 @@
-import { Controller, Get, Body, Post, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Body, Post, Param, UseGuards, Delete } from '@nestjs/common';
 import { Component } from '../domain/component';
 import { ComponentDto } from '../dto/component.dto';
 import { ComponentService } from '../service/component.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { UsernameAuthGuard } from 'src/auth/guard/username-auth.guard';
+import { Interface } from '../domain/interface';
+import { InterfaceDto } from '../dto/interface.dto';
 
 /**
  * Controller for 'components' API.
@@ -27,7 +29,8 @@ export class ComponentController {
         return await this.componentService.create({
             name: component.name,
             displayName: component.displayName,
-            projectName: projectName
+            projectName: projectName,
+            providedInterfacesNames: []
         });
     }
 
@@ -52,5 +55,29 @@ export class ComponentController {
     @UseGuards(UsernameAuthGuard)
     async getAll(@Param('projectName') projectName: string): Promise<Component[]> {
         return await this.componentService.getAll(projectName);
+    }
+
+    /**
+     * Creates an interface for a given component.
+     * @param projectName The project's name which contains the component that provides the interface.
+     * @param componentName The component's name that provides the interface.
+     * @param componentInterface The interface which should be created.
+     */
+    @Post(':componentName/interfaces')
+    @UseGuards(UsernameAuthGuard)
+    async createInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string, @Body() componentInterface: InterfaceDto): Promise<Interface> {
+        return await this.componentService.createInterface(projectName, componentName, {
+            name: componentInterface.name,
+            displayName: componentInterface.displayName,
+            type: componentInterface.type,
+            componentName: componentName,
+            projectName: projectName
+        });
+    }
+
+    @Delete(':componentName/interfaces/:interfaceName')
+    @UseGuards(UsernameAuthGuard)
+    async deleteInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string, @Param('interfaceName') interfaceID: string) {
+        return this.componentService.deleteInterface(projectName, componentName, interfaceID);
     }
 }
