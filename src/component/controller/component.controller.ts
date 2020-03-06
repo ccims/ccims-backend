@@ -65,7 +65,8 @@ export class ComponentController {
      */
     @Post(':componentName/interfaces')
     @UseGuards(UsernameAuthGuard)
-    async createInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string, @Body() componentInterface: InterfaceDto): Promise<Interface> {
+    async createInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string,
+        @Body() componentInterface: InterfaceDto): Promise<Interface> {
         return await this.componentService.createInterface(projectName, componentName, {
             name: componentInterface.name,
             displayName: componentInterface.displayName,
@@ -75,9 +76,16 @@ export class ComponentController {
         });
     }
 
+    /**
+     * Deletes an interface.
+     * @param projectName Name of the project which the component's interface belongs to.
+     * @param componentName Name of the component which provides the interface.
+     * @param interfaceName The name of the interface which should be deleted.
+     */
     @Delete(':componentName/interfaces/:interfaceName')
     @UseGuards(UsernameAuthGuard)
-    async deleteInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string, @Param('interfaceName') interfaceID: string) {
-        return this.componentService.deleteInterface(projectName, componentName, interfaceID);
+    async deleteInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string,
+        @Param('interfaceName') interfaceName: string) {
+        return this.componentService.deleteInterface(projectName, componentName, interfaceName);
     }
 }

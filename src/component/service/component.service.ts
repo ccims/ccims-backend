@@ -4,6 +4,9 @@ import { MongoRepository, getConnection } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Interface } from '../domain/interface';
 
+/**
+ * Service for the component domain.
+ */
 @Injectable()
 export class ComponentService {
 

@@ -1,5 +1,7 @@
 import { IsNotEmpty, IsString, Matches } from "class-validator";
-
+/**
+ * Dto for an interface.
+ */
 export class InterfaceDto {
     /**
      * The interface's name.
