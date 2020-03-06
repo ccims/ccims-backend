@@ -11,9 +11,10 @@ import { JwtModule } from '@nestjs/jwt';
         TypeOrmModule.forFeature([Project]), UserModule,
         JwtModule.register({
             secret: 'some-really-hard-secret', // TODO load secret with service from config file
-            signOptions: { expiresIn: '600s' }, // TODO extend expiresIn so that a user is logged in longer
+            signOptions: { expiresIn: '1d' }, // TODO extend expiresIn so that a user is logged in longer
         })],
     controllers: [ProjectController],
-    providers: [ProjectService]
+    providers: [ProjectService],
+    exports: [ProjectService]
 })
 export class ProjectModule { }

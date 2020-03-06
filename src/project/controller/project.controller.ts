@@ -44,10 +44,10 @@ export class ProjectController {
      * @param name The project's name.
      * @returns The project with the given name.
      */
-    @Get(':name')
+    @Get(':projectName')
     @UseGuards(UsernameAuthGuard)
-    async getProjectByName(@Param('name') name: string): Promise<Project> {
-        return this.projectService.findOne(name);
+    async getProjectByName(@Param('projectName') name: string): Promise<Project> {
+        return await this.projectService.findOne(name);
     }
 
     /**
@@ -55,9 +55,9 @@ export class ProjectController {
      * @param name The project's name.
      * @returns The project that is deleted.
      */
-    @Delete(':name')
+    @Delete(':projectName')
     @UseGuards(UsernameAuthGuard)
-    async deleteProjectByName(@Param('name') name: string): Promise<Project> {
+    async deleteProjectByName(@Param('projectName') name: string): Promise<Project> {
         return await this.projectService.deleteProjectByName(name);
     }
 
@@ -67,10 +67,10 @@ export class ProjectController {
      * @param contributor The contributor which should be added.
      * @returns The updated project.
      */
-    @Patch(':name')
+    @Patch(':projectName')
     @UseGuards(UsernameAuthGuard)
     @UsePipes(ProjectContributorPipe)
-    async addContributor(@Param('name') projectName: string, @Body() contributor: ContributorDto) {
+    async addContributor(@Param('projectName') projectName: string, @Body() contributor: ContributorDto) {
         return await this.projectService.addAsContributorToProject(projectName, contributor);
     }
 }

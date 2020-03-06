@@ -1,22 +1,56 @@
-import { Controller, Get, Body, Post } from '@nestjs/common';
+import { Controller, Get, Body, Post, Param, UseGuards } from '@nestjs/common';
 import { Component } from '../domain/component';
 import { ComponentDto } from '../dto/component.dto';
 import { ComponentService } from '../service/component.service';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { UsernameAuthGuard } from 'src/auth/guard/username-auth.guard';
 
-@Controller('components')
+/**
+ * Controller for 'components' API.
+ * Offers Endpoints to CRUD components.
+ */
+@Controller('projects/:projectName/components')
+@UseGuards(JwtAuthGuard)
 export class ComponentController {
 
-    constructor(private readonly componentService: ComponentService) {
+    constructor(private readonly componentService: ComponentService) { }
 
-    }
-
-    @Get()
-    async getAll(): Promise<Component[]> {
-        return this.componentService.getAll();
-    }
-
+    /**
+     * Creates a new component.
+     * @param projectName The project that should contain the component.
+     * @param component The component that should be created.
+     * @returns The component that is created.
+     */
     @Post()
-    async create(@Body() componentDto: ComponentDto) {
-        this.componentService.create(componentDto);
+    @UseGuards(UsernameAuthGuard)
+    async create(@Param('projectName') projectName: string, @Body() component: ComponentDto) {
+        return await this.componentService.create({
+            name: component.name,
+            displayName: component.displayName,
+            projectName: projectName
+        });
+    }
+
+    /**
+     * Gets the component with the given name.
+     * @param componentName The component's name.
+     * @param projectName The project's name which contains the component.
+     * @returns The component with given name.
+     */
+    @Get(':componentName')
+    @UseGuards(UsernameAuthGuard)
+    async getComponentByName(@Param('componentName') componentName: string, @Param('projectName') projectName: string): Promise<Component> {
+        return await this.componentService.findOne(projectName, componentName);
+    }
+
+    /**
+     * Gets all components of a given project.
+     * @param projectName The project's name.
+     * @returns List of components of the project.
+     */
+    @Get()
+    @UseGuards(UsernameAuthGuard)
+    async getAll(@Param('projectName') projectName: string): Promise<Component[]> {
+        return await this.componentService.getAll(projectName);
     }
 }

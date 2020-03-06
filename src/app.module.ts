@@ -10,6 +10,7 @@ import { ComponentModule } from './component/component.module';
 import { Connection } from 'typeorm';
 import { User } from './user/domain/user';
 import { Project } from './project/domain/project';
+import { Component } from './component/domain/component';
 
 @Module({
     imports: [ConfigModule.forRoot({
@@ -36,7 +37,7 @@ import { Project } from './project/domain/project';
         host: 'localhost',
         port: 27017,
         database: 'mcim',
-        entities: [User, Project],
+        entities: [User, Project, Component],
         synchronize: true,
         useNewUrlParser: true,
         logging: true,
