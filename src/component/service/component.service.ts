@@ -55,6 +55,12 @@ export class ComponentService {
         return await this.componentRepository.find({ projectName: projectName });
     }
 
+    /**
+     * Deletes a component of a given project.
+     * @param projectName The name of the project which contains the component.
+     * @param componentName The name of the component which should be deleted.
+     * @returns The deleted component.
+     */
     async deleteComponent(projectName: string, componentName: string) {
         const component: Component = await this.findOne(projectName, componentName);
         await this.deleteComponentTransaction(componentName, projectName);
