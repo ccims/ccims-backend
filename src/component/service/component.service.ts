@@ -33,8 +33,8 @@ export class ComponentService {
 
     /**
      * Finds the first entity with the given component in the db.
-     * @param componentName The component's name.
      * @param projectName The project's name the component belongs to.
+     * @param componentName The component's name.
      * @returns The component with the given name if exists.
      * @throws BadRequestException if the component does not exists.
      */
@@ -54,6 +54,13 @@ export class ComponentService {
     async getAll(projectName: string): Promise<Component[]> {
         return await this.componentRepository.find({ projectName: projectName });
     }
+
+    async deleteComponent(projectName: string, componentName: string) {
+        const component: Component = await this.findOne(projectName, componentName);
+        await this.deleteComponentTransaction(componentName, projectName);
+        return component;
+    }
+
 
     /**
      * Creates a new interface for a given component in the database.
@@ -82,6 +89,29 @@ export class ComponentService {
         }
         await this.deleteInterfaceTransaction(interfaceName, componentName, projectName);
         return componentInterface;
+    }
+
+    /**
+     * Database transaction to delete a component.
+     * @param componentName The name of the component which should be deleted.
+     * @param projectName The name of the project that contains the component.
+     * @throws BadRequestException if some error happens during the transaction.
+     */
+    private async deleteComponentTransaction(componentName: string, projectName: string) {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            await this.componentRepository.deleteOne({ name: componentName, projectName: projectName });
+            await this.interfaceRepository.deleteMany({ componentName: componentName, projectName: projectName });
+            await queryRunner.commitTransaction();
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`The component could not be deleted`);
+        } finally {
+            await queryRunner.release();
+        }
     }
 
     /**

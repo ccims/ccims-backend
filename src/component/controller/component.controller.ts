@@ -58,6 +58,17 @@ export class ComponentController {
     }
 
     /**
+     * Deletes a component from a project.
+     * @param projectName The name of the project which contains the component.
+     * @param componentName The name of the component which should be deleted.
+     */
+    @Delete(':componentName')
+    @UseGuards(UsernameAuthGuard)
+    async deleteComponentByName(@Param('projectName') projectName: string, @Param('componentName') componentName: string) {
+        return await this.componentService.deleteComponent(projectName, componentName);
+    }
+
+    /**
      * Creates an interface for a given component.
      * @param projectName The project's name which contains the component that provides the interface.
      * @param componentName The component's name that provides the interface.
