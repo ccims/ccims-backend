@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { MongoRepository, getConnection } from 'typeorm';
+import { MongoRepository, getConnection, UpdateWriteOpResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as _ from "lodash";
 import { Project } from '../domain/project';
@@ -72,6 +72,30 @@ export class ProjectService {
         project.contributors.push(contributor);
         await this.addContributorTransaction(project, contributor);
         return project;
+    }
+
+    async removeContributorFromProject(projectName: string, contributor: Contributor) {
+        await this.removeContributorTransaction(projectName, contributor);
+    }
+
+    private async removeContributorTransaction(projectName: string, contributor: Contributor) {
+        const connection = getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            const result: UpdateWriteOpResult = await this.projectRepository.updateOne({ name: projectName }, { $pull: { contributors: contributor } });
+            if (result.modifiedCount === 0) {
+                throw new Error();
+            }
+            await this.userService.removeProjectFromUser(projectName, contributor.username);
+            await queryRunner.commitTransaction();
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            throw new BadRequestException(`Contributor ${contributor.username} could not be removed from project ${projectName}`);
+        } finally {
+            await queryRunner.release();
+        }
     }
 
     /**

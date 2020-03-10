@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { MongoRepository, getConnection } from 'typeorm';
+import { MongoRepository, getConnection, UpdateWriteOpResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from 'src/project/domain/project';
 import { User } from '../domain/user';
@@ -50,10 +50,11 @@ export class UserService {
      * @param username The user's name.
      * @returns The updated user.
      */
-    async addProjectToUser(project: Project, username: string): Promise<User> {
-        const user: User = await this.findOne(username);
-        user.projectNames.push(project.name);
-        return await this.userRepository.save(user);
+    async addProjectToUser(project: Project, username: string) {
+        const result: UpdateWriteOpResult = await this.userRepository.updateOne({ username: username }, { $push: { projectNames: project.name } });
+        if (result.modifiedCount === 0) {
+            throw new BadRequestException(`The user ${username} does not exist!`);
+        }
     }
 
     /**

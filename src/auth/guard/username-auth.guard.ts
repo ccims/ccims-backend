@@ -30,7 +30,7 @@ export class UsernameAuthGuard implements CanActivate {
             return request.user.username === request.body.owner;
         } else if ((request.route.path as string).includes('/projects/:projectName')) {
             const project: Project = await this.projectService.findOne(request.params.projectName);
-            if (!(request.route.path as string).includes('components') && request.method === 'DELETE' || request.method === 'PATCH') {
+            if (!(request.route.path as string).includes('components') && request.method !== 'GET') {
                 return request.user.username === project.owner.username;
             } else {
                 return _.some(project.contributors, { username: request.user.username });

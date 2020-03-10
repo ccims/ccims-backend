@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Param, Delete, Patch, UsePipes } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Delete, UsePipes } from '@nestjs/common';
 import { ProjectService } from '../service/project.service';
 import { ProjectDto } from '../dto/project.dto';
 import { ProjectOwnerPipe } from '../pipe/project.pipe';
@@ -67,10 +67,18 @@ export class ProjectController {
      * @param contributor The contributor which should be added.
      * @returns The updated project.
      */
-    @Patch(':projectName')
+    @Post(':projectName/contributors')
     @UseGuards(UsernameAuthGuard)
     @UsePipes(ProjectContributorPipe)
     async addContributor(@Param('projectName') projectName: string, @Body() contributor: ContributorDto) {
         return await this.projectService.addAsContributorToProject(projectName, contributor);
+    }
+
+    @Delete(':projectName/contributors')
+    @UseGuards(UsernameAuthGuard)
+    @UsePipes(ProjectContributorPipe)
+    async removeContributor(@Param('projectName') projectName: string, @Body() contributor: ContributorDto) {
+        await this.projectService.removeContributorFromProject(projectName, contributor);
+        return this.projectService.findOne(projectName);
     }
 }
