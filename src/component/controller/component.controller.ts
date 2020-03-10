@@ -92,6 +92,7 @@ export class ComponentController {
      * @param projectName Name of the project which the component's interface belongs to.
      * @param componentName Name of the component which provides the interface.
      * @param interfaceName The name of the interface which should be deleted.
+     * @returns The deleted interface.
      */
     @Delete(':componentName/interfaces/:interfaceName')
     @UseGuards(UsernameAuthGuard)

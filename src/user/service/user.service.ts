@@ -48,7 +48,7 @@ export class UserService {
      * Adds a given project to a given user.
      * @param project The project which should be added to the user.
      * @param username The user's name.
-     * @returns The updated user.
+     * @throws BadRequestException if the user does not exist.
      */
     async addProjectToUser(project: Project, username: string) {
         const result: UpdateWriteOpResult = await this.userRepository.updateOne({ username: username }, { $push: { projectNames: project.name } });
@@ -66,6 +66,10 @@ export class UserService {
         await this.userRepository.updateOne({ username: username }, { $pull: { projectNames: projectName } });
     }
 
+    /**
+     * Database transaction to find a user with given username.
+     * @param username The name of the user which should be found.
+     */
     private async findOneTransaction(username: string): Promise<User> {
         const connection = getConnection();
         const queryRunner = connection.createQueryRunner();

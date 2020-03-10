@@ -74,10 +74,21 @@ export class ProjectService {
         return project;
     }
 
+    /**
+     * Removes a contributor with given name from a given project.
+     * @param projectName The name of the project containing the contributor.
+     * @param contributor The contributor who should be removed from the project.
+     */
     async removeContributorFromProject(projectName: string, contributor: Contributor) {
         await this.removeContributorTransaction(projectName, contributor);
     }
 
+    /**
+     * Database transaction to remove a given contributor from a project.
+     * @param projectName The project's name.
+     * @param contributor The contributor who should be removed from the project.
+     * @throws BadRequestException if some error occurs during the transaction, the project does not exist, or the contributor is not part of the project.
+     */
     private async removeContributorTransaction(projectName: string, contributor: Contributor) {
         const connection = getConnection();
         const queryRunner = connection.createQueryRunner();

@@ -74,6 +74,12 @@ export class ProjectController {
         return await this.projectService.addAsContributorToProject(projectName, contributor);
     }
 
+    /**
+     * Removes a given contributor from the project.
+     * @param projectName The name of the project which has the contributor.
+     * @param contributor The contributor which should be removed from the project.
+     * @returns The updated project without the contributor.
+     */
     @Delete(':projectName/contributors')
     @UseGuards(UsernameAuthGuard)
     @UsePipes(ProjectContributorPipe)
