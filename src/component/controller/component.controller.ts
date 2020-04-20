@@ -30,7 +30,8 @@ export class ComponentController {
             name: component.name,
             displayName: component.displayName,
             projectName: projectName,
-            providedInterfacesNames: []
+            providedInterfacesNames: [],
+            connectedInterfacesIds: []
         });
     }
 
@@ -98,6 +99,12 @@ export class ComponentController {
     @UseGuards(UsernameAuthGuard)
     async deleteInterface(@Param('projectName') projectName: string, @Param('componentName') componentName: string,
         @Param('interfaceName') interfaceName: string) {
-        return this.componentService.deleteInterface(projectName, componentName, interfaceName);
+        return await this.componentService.deleteInterface(projectName, componentName, interfaceName);
+    }
+
+    @Get(':componentName/interfaces')
+    @UseGuards(UsernameAuthGuard)
+    async getAllInterfaces(@Param('projectName') projectName: string, @Param('componentName') componentName: string) {
+        return await this.componentService.getAllInterfaces(projectName, componentName);
     }
 }

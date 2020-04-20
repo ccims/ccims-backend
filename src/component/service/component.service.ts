@@ -97,6 +97,10 @@ export class ComponentService {
         return componentInterface;
     }
 
+    async getAllInterfaces(projectName: string, componentName: string) {
+        return await this.interfaceRepository.find({ projectName: projectName, componentName: componentName });
+    }
+
     /**
      * Database transaction to delete a component.
      * @param componentName The name of the component which should be deleted.

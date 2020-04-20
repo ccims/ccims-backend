@@ -11,7 +11,7 @@ export class Component {
      * MongoDB ID of the component.
      */
     @ObjectIdColumn()
-    _id?: ObjectId;
+    _id?: string;
 
     /**
      * The component's name.
@@ -36,4 +36,10 @@ export class Component {
      */
     @Column()
     providedInterfacesNames: string[];
+
+    /**
+     * List of the IDs of the interfaces the component is connected to.
+     */
+    @Column()
+    connectedInterfacesIds: string[];
 }
