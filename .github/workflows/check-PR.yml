@@ -1,0 +1,43 @@
+# This workflow is used to verify that code in pull requests is executable to mitigate application-breaking errors before merging
+
+name: Build
+
+on:
+  pull_request:
+    branches: [ master, develop ]
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Set up Build agent code environment # (e.g. Node.js, dotnet core, ...)
+      run: echo '[Warning] No build agent defined yet!'
+      # Swap with the appropiate action
+      # uses: actions/setup-node@v1 #
+      # with:
+      #  node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: echo '[Warning] No package manager defined yet!'
+
+      # Run a script to install all dependencies
+      # run: npm install
+
+
+    - name: Build project
+      run: echo '[Warning] No build script defined yet!'
+
+      # Run the appropiate command to build the project
+      # run: tsc
+    - name: Test
+      run: echo '[Warning] No tests defined yet!'
+
+      # Run tests on the project
+      # run: npm test
+      # env:
+      #  CI: true
