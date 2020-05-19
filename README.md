@@ -9,7 +9,7 @@
 
 ## Description
 
-[Cross-Component Issue Management](https://github.com/mpmti/) framework to improve cross-component issue management in component-based architectures, such as microservice architectures.
+[Cross-Component Issue Management](https://github.com/ccims/) framework to improve cross-component issue management in component-based architectures, such as microservice architectures.
 
 ## Installation
 
