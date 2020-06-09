@@ -1,0 +1,29 @@
+# This workflow verifies that code in pull requests passes all unit and e2e tests 
+
+name: Run Tests
+on: [push] #[pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ubuntu-lastest,macos-latest]
+        node-version: [12.x] 
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: npm install
+      run: |
+        npm install --dev
+    - name: run unit tests
+      run: | 
+        npm run test
+    - name: run e2e tests
+      run : |
+        npm run test:e2e
