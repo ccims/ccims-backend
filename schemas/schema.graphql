@@ -1,8 +1,10 @@
-#General Interfaces
+#An object which can be identified by an ID - called a node
 interface Node {
     id: ID!
 }
 
+#A page (sometimes also called connection) of multiple elements. 
+#A page has a content of some type (depending on the type of page)
 interface Page {
     pageInfo: PageInfo!
     totalCount: Int!
@@ -28,7 +30,7 @@ type UserPage implements Page {
 }
 
 input UserFilter {
-
+    username: String
 }
 
 
@@ -44,11 +46,11 @@ type ComponentPage implements Page {
 }
 
 input ComponentFilter {
-
+    name: String
 }
 
 type ComponentInterface {
-
+    name: String!
 }
 
 
@@ -88,7 +90,7 @@ type IssuePage implements Page {
 }
 
 input IssueFilter {
-
+    title: String
 }
 
 
@@ -108,7 +110,7 @@ type IssueTimelineItemPage implements Page {
 }
 
 input IssueTimelineItemFilter {
-
+    createdBy: ID
 }
 
 #IssueComment
@@ -143,7 +145,7 @@ type IssueCommentPage implements Page {
 }
 
 input IssueCommentFilter {
-
+    createdBy: ID
 }
 
 type DeletedIssueComment implements IssueTimelineItem {
@@ -448,5 +450,5 @@ type IssueLocationPage {
 }
 
 input IssueLocationFilter {
-
+    name: String
 }
