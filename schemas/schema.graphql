@@ -13,8 +13,9 @@ interface Page {
 }
 
 type PageInfo {
-    startID: ID
-    endID: ID
+    startCursor: String
+    endCursor: String
+    endID: String
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
 }
@@ -27,8 +28,14 @@ type User implements Node {
 
 type UserPage implements Page {
     nodes: [User]
+    edges: [UserEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type UserEdge {
+    node: User
+    cursor: String!
 }
 
 input UserFilter {
@@ -43,8 +50,14 @@ type Component implements Node {
 
 type ComponentPage implements Page {
     nodes: [Component]
+    edges: [ComponentEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type ComponentEdge {
+    node: Component
+    cursor: String
 }
 
 input ComponentFilter {
@@ -74,28 +87,40 @@ type Issue implements Comment {
     linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
-    label(after: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelPage
+    labels(after: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelPage
     participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
     timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemPage
     locations(after: ID, before: ID, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationPage
-    viewerCanEdit: Boolean!
-    viewerCanComment: Boolean!
+    currentUserCanEdit: Boolean!
+    currentUserCanComment: Boolean!
     startDate: Date
-    DueDate: Date
+    dueDate: Date
     estimatedTime: TimeSpan
 }
 
 input IssueInput {
     title: String!,
     body: String,
-    componentID: ID!,
-    category: IssueCategory
+    componentIDs: [ID!]!,
+    category: IssueCategory,
+    labels: [ID!],
+    assignees: [User!],
+    locations: [ID!],
+    startDate: Date,
+    dueDate: Date,
+    estimatedTime: TimeSpan,
 }
 
 type IssuePage implements Page {
     nodes: [Issue]
+    edges: [IssueEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type IssueEdge {
+    node: Issue
+    cursor: String
 }
 
 input IssueFilter {
@@ -114,8 +139,14 @@ interface IssueTimelineItem implements Node {
 
 type IssueTimelineItemPage implements Page {
     nodes: [IssueTimelineItem]
+    edges: [IssueTimelineItemEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type IssueTimelineItemEdge {
+    node: IssueTimelineItem
+    cursor: String
 }
 
 input IssueTimelineItemFilter {
@@ -132,7 +163,7 @@ interface Comment implements Node {
     body: String
     bodyRendered: String
     reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
-    viewerCanEdit: Boolean!
+    currentUserCanEdit: Boolean!
 }
 
 type IssueComment implements IssueTimelineItem & Comment {
@@ -144,13 +175,23 @@ type IssueComment implements IssueTimelineItem & Comment {
     body: String
     bodyRendered: String
     reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
-    viewerCanEdit: Boolean!
+    currentUserCanEdit: Boolean!
+}
+
+input IssueCommentInput {
+    body: String
 }
 
 type IssueCommentPage implements Page {
     nodes: [IssueComment]
+    edges: [IssuecommentEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type IssuecommentEdge {
+    node: IssueComment
+    cursor: String
 }
 
 input IssueCommentFilter {
@@ -376,8 +417,14 @@ type ReactionGroup {
 
 type ReactionGroupPage {
     nodes: [ReactionGroup]
+    edges: [ReactionGroupEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type ReactionGroupEdge {
+    node: ReactionGroup
+    cursor: String
 }
 
 input ReactionGroupFilter {
@@ -393,8 +440,14 @@ type Label implements Node {
 
 type LabelPage {
     nodes: [Label]
+    edges: [LabelEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type LabelEdge {
+    node: Label
+    cursor: String
 }
 
 input LabelFilter {
@@ -454,8 +507,14 @@ union IssueLocation = Component | ComponentInterface
 
 type IssueLocationPage {
     nodes: [IssueLocation]
+    edges: [IssueLocationEdge]
     pageInfo: PageInfo!
     totalCount: Int!
+}
+
+type IssueLocationEdge {
+    node: IssueLocation
+    cursor: String
 }
 
 input IssueLocationFilter {
