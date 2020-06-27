@@ -126,7 +126,7 @@ interface Comment implements Node {
     viewerCanEdit: Boolean!
 }
 
-type IssueComment implements IssueTimelineItem {
+type IssueComment implements IssueTimelineItem,Comment {
     id: ID!
     createdBy: User
     editedBy: User
@@ -158,7 +158,7 @@ type DeletedIssueComment implements IssueTimelineItem {
 }
 
 #when mentioned in a commit or a pull request
-type ReferencedEvent implements IssueTimelineItem {
+type ReferencedByOtherEvent implements IssueTimelineItem {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -168,7 +168,7 @@ type ReferencedEvent implements IssueTimelineItem {
     sourceURL: String
 }
 
-type MentionedByOtherEvent implements IssueTimelineItem {
+type ReferencedByIssueEvent implements IssueTimelineItem {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -403,6 +403,10 @@ enum IssueType {
     BUG,
     FEATURE_REQUEST,
     UNCLASSIFIED
+}
+
+enum IssueTimelineItemType {
+
 }
 
 scalar Date
