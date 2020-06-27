@@ -1,12 +1,67 @@
+#The root api types
 
+"""
+All queries
+"""
+type Query {
+    """
+    Requets an object (node) using the given ID. If the given ID is invalid an error will be returned
+    """
+    node (
+        """
+        The ID of the node to return. This can't be empty or null
+        """
+        id: ID!
+    ): Node
 
-#An object which can be identified by an ID - called a node
+    """
+    Requests issues in this instace of ccims
+    """
+    issues(
+        """
+        Returns all issues in the system that match the other inputs after the given one (inclusive)
+        """
+        after: ID, 
+        """
+        Returns all issues in the system that match the other inputs before the given one (exclusive)
+        """
+        before: ID,
+        """
+        Filters the issues to return by the specified criteria. A returned issue will match all of the given parameters
+        """
+        filterBy: IssueFilter, 
+        """
+        If given, the first _n_ issues found in the system (matching the other given parameters) will be returned. 
+        If this is given, `last` can't be given or an error will be returned
+        """
+        first: Int, 
+        """
+        If given, the last _n_ issues found in the system (matching the other given parameters) will be returned.
+        If this is given, `first` can't be given or an error will be returned
+        """
+        last: Int): IssuePage
+
+}
+
+#----------Basic types---------------
+"""
+An object which can be identified by an ID - called a node
+"""
 interface Node {
+    """
+    The ID of this node. Evey node will have an non-empty and non-null edge.
+
+    If this is ever empty or null, something went wrong.
+    """
     id: ID!
 }
 
-#A page (sometimes also called connection) of multiple elements. 
-#A page has a content of some type (depending on the type of page)
+"""
+A page (sometimes also called connection) of multiple elements. 
+
+A page has a content (the list of elements) of some type (depending on the type of page).
+It also has information about the page as well as a count of total elements of that type (not only the ones on this page)
+"""
 interface Page {
     pageInfo: PageInfo!
     totalCount: Int!
@@ -130,8 +185,7 @@ input IssueFilter {
 
 #Issue timeline items
 
-interface IssueTimelineItem implements Node {
-    id: ID!
+interface IssueTimelineItem {
     issue: Issue!
     createdBy: User
     createdAt: Date!
@@ -154,7 +208,7 @@ input IssueTimelineItemFilter {
 }
 
 #IssueComment
-interface Comment implements Node {
+interface Comment {
     id: ID!
     createdBy: User
     editedBy: User
@@ -166,8 +220,9 @@ interface Comment implements Node {
     currentUserCanEdit: Boolean!
 }
 
-type IssueComment implements IssueTimelineItem & Comment {
+type IssueComment implements IssueTimelineItem & Comment & Node {
     id: ID!
+    issue: Issue!
     createdBy: User
     editedBy: User
     createdAt: Date!
@@ -198,7 +253,7 @@ input IssueCommentFilter {
     createdBy: ID
 }
 
-type DeletedIssueComment implements IssueTimelineItem {
+type DeletedIssueComment implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -208,7 +263,7 @@ type DeletedIssueComment implements IssueTimelineItem {
 }
 
 #when mentioned in a commit or a pull request
-type ReferencedByOtherEvent implements IssueTimelineItem {
+type ReferencedByOtherEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -218,7 +273,7 @@ type ReferencedByOtherEvent implements IssueTimelineItem {
     sourceURL: String
 }
 
-type ReferencedByIssueEvent implements IssueTimelineItem {
+type ReferencedByIssueEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -228,7 +283,7 @@ type ReferencedByIssueEvent implements IssueTimelineItem {
 }
 
 #when an user actively links another issue
-type LinkEvent implements IssueTimelineItem {
+type LinkEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -237,7 +292,7 @@ type LinkEvent implements IssueTimelineItem {
 }
 
 # when an user unlinks another issue
-type UnlinkEvent implements IssueTimelineItem {
+type UnlinkEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -246,7 +301,7 @@ type UnlinkEvent implements IssueTimelineItem {
 }
 
 #when another issue links this issue
-type WasLinkedEvent implements IssueTimelineItem {
+type WasLinkedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -255,7 +310,7 @@ type WasLinkedEvent implements IssueTimelineItem {
 }
 
 #when another issue unlinks this issue
-type WasUnlinkedEvent implements IssueTimelineItem {
+type WasUnlinkedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -263,7 +318,7 @@ type WasUnlinkedEvent implements IssueTimelineItem {
     unlinkedBy: Issue
 }
 
-type LabeledEvent implements IssueTimelineItem {
+type LabeledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -271,7 +326,7 @@ type LabeledEvent implements IssueTimelineItem {
     label: Label!
 }
 
-type UnlabledEvent implements IssueTimelineItem {
+type UnlabledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -279,21 +334,21 @@ type UnlabledEvent implements IssueTimelineItem {
     removedLabel: Label!
 }
 
-type PinnedEvent implements IssueTimelineItem {
+type PinnedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
 }
 
-type UnpinnedEvent implements IssueTimelineItem {
+type UnpinnedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
 }
 
-type RenamedTitleEvent implements IssueTimelineItem {
+type RenamedTitleEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -302,7 +357,7 @@ type RenamedTitleEvent implements IssueTimelineItem {
     newTitle: String!
 }
 
-type CategoryChangedEvent implements IssueTimelineItem {
+type CategoryChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -311,7 +366,7 @@ type CategoryChangedEvent implements IssueTimelineItem {
     newType: IssueCategory!
 }
 
-type AssignedEvent implements IssueTimelineItem {
+type AssignedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -319,7 +374,7 @@ type AssignedEvent implements IssueTimelineItem {
     assignee: User!
 }
 
-type UnassignedEvet implements IssueTimelineItem {
+type UnassignedEvet implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -327,21 +382,21 @@ type UnassignedEvet implements IssueTimelineItem {
     removedAssignee: User!
 }
 
-type ClosedEvent implements IssueTimelineItem {
+type ClosedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
 }
 
-type ReopenedEvent implements IssueTimelineItem {
+type ReopenedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
 }
 
-type PriorityChangedEvent implements IssueTimelineItem {
+type PriorityChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -350,7 +405,7 @@ type PriorityChangedEvent implements IssueTimelineItem {
     newPriority: Priority
 }
 
-type StartDateChangedEvent implements IssueTimelineItem {
+type StartDateChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -359,7 +414,7 @@ type StartDateChangedEvent implements IssueTimelineItem {
     newStartDate: Date
 }
 
-type DueDateChangedEvent implements IssueTimelineItem {
+type DueDateChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -368,7 +423,7 @@ type DueDateChangedEvent implements IssueTimelineItem {
     newDueDate: Date
 }
 
-type EstimatedTimeChangedEvent implements IssueTimelineItem {
+type EstimatedTimeChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -377,7 +432,7 @@ type EstimatedTimeChangedEvent implements IssueTimelineItem {
     newEstimatedTime: TimeSpan
 }
 
-type AddedLocationEvent implements IssueTimelineItem {
+type AddedLocationEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -385,7 +440,7 @@ type AddedLocationEvent implements IssueTimelineItem {
     location: IssueLocation!
 }
 
-type RemovedLocationEvent implements IssueTimelineItem {
+type RemovedLocationEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -393,7 +448,7 @@ type RemovedLocationEvent implements IssueTimelineItem {
     removedLocation: IssueLocation!
 }
 
-type MarkedAsDuplicateEvent implements IssueTimelineItem {
+type MarkedAsDuplicateEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -401,7 +456,7 @@ type MarkedAsDuplicateEvent implements IssueTimelineItem {
     originalIssue: Issue
 }
 
-type UnmarkedAsDuplicateEvent implements IssueTimelineItem {
+type UnmarkedAsDuplicateEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -428,7 +483,7 @@ type ReactionGroupEdge {
 }
 
 input ReactionGroupFilter {
-
+    reaction: String
 }
 
 type Label implements Node {
@@ -451,7 +506,7 @@ type LabelEdge {
 }
 
 input LabelFilter {
-
+    name: String
 }
 
 #scalars
