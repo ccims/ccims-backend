@@ -1,0 +1,17 @@
+{
+    "spellright.language": [
+        "de",
+        "en"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "plaintext",
+        "latex",
+        "graphql"
+    ],
+    "spellright.parserByClass": {
+        "graphql": {
+            "parser": "markdown"
+        }
+    }
+}
