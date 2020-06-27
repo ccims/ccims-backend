@@ -66,7 +66,7 @@ type Issue implements Comment {
     updatedAt: Date
     isOpen: Boolean!
     isDuplicate: Boolean!
-    issueType: IssueType!
+    issueCategory: IssueCategory!
     linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
@@ -250,13 +250,13 @@ type RenamedTitleEvent implements IssueTimelineItem {
     newTitle: String!
 }
 
-type TypeChangedEvent implements IssueTimelineItem {
+type CategoryChangedEvent implements IssueTimelineItem {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
-    oldType: IssueType!
-    newType: IssueType!
+    oldType: IssueCategory!
+    newType: IssueCategory!
 }
 
 type AssignedEvent implements IssueTimelineItem {
@@ -397,14 +397,39 @@ enum Priority {
     HIGH
 }
 
-enum IssueType {
+enum IssueCategory {
     BUG,
     FEATURE_REQUEST,
     UNCLASSIFIED
 }
 
 enum IssueTimelineItemType {
-
+    ISSUE_COMMENT,
+    DELETED_ISSUE_COMMENT,
+    REFERENCED_BY_OTHER_EVENT,
+    REFERENCED_BY_ISSUE_FOUND,
+    LINK_EVENT,
+    UNLINK_EVENT,
+    WAS_LINKED_EVENT,
+    WAS_UNLINKED_EVENT,
+    LABELED_EVENT,
+    UNLABELED_EVENT,
+    PINNED_EVENT,
+    UNPINNED_EVENT,
+    RENAMED_TITLE_EVENT,
+    CATEGORY_CHANGED_EVENT,
+    ASSIGNED_EVENT,
+    UNASSIGNED_EVENT,
+    CLOSED_EVENT,
+    REOPENED_EVENT,
+    PRIORITY_CHANGED_EVENT,
+    START_DATE_CHANGED,
+    DUE_DATE_CHANGED,
+    ESTIMATED_TIME_CHANGED,
+    ADDED_LOCATION_EVENT,
+    REMOVED_LOCATION_EVENT,
+    MARKED_AS_DUPLICATE_EVENT,
+    UNMARKED_AS_DUPLICATE_EVENT,
 }
 
 scalar Date
@@ -417,7 +442,7 @@ scalar Color
 union IssueLocation = Component | ComponentInterface
 
 type IssueLocationPage {
-    nodes: [AssignTarget]
+    nodes: [IssueLocation]
     pageInfo: PageInfo!
     totalCount: Int!
 }
