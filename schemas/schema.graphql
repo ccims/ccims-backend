@@ -1,0 +1,107 @@
+#General Interfaces
+interface Node {
+    id: String!
+}
+
+interface Connection {
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+
+#User
+type User implements Node {
+    id: String!
+}
+
+type UserEdge {
+    cursor: String!
+    node: User
+}
+
+type UserConnection implements Connection {
+    edges: [UserEdge]
+    nodes: [User]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type UserFilter {
+
+}
+
+
+#Component
+type Component implements Node {
+    id: String!
+}
+
+type ComponentEdge {
+    cursor: String!
+    node: Component
+}
+
+type ComponentConnection implements Connection {
+    edges: [ComponentEdge]
+    nodes: [Component]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type ComponentFilter {
+
+}
+
+
+#Issue
+type Issue implements Comment {
+    id: String!
+    title: String!
+    body: String!
+    bodyRendered: String!
+}
+
+type IssueEdge {
+    cursor: String!
+    node: Issue
+}
+
+type IssueConnection implements Connection {
+    edges: [IssueEdge]
+    nodes: [Issue]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type IssueFilter {
+
+}
+
+
+#Issue timeline items
+
+interface IssueTimelineItem implements Node {
+    id: String!
+    issue: Issue!
+    user: User
+}
+
+#IssueComment
+interface Comment implements Node {
+    id: String!
+    body: String!
+    bodyRendered: String!
+}
+
+type IssueComment implements IssueTimelineItem {
+    id: String!
+    body: String!
+    bodyRendered: String!
+}
+
+//scalars
+enum Priority {
+    LOW,
+    MEDIUM,
+    HIGH
+}
