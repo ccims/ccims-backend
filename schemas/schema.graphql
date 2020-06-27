@@ -43,6 +43,10 @@ type Query {
 
 }
 
+type Mutation {
+
+}
+
 #----------Basic types---------------
 """
 An object which can be identified by an ID - called a node
@@ -151,9 +155,10 @@ type Issue implements Comment {
     startDate: Date
     dueDate: Date
     estimatedTime: TimeSpan
+    spentTime: TimeSpan
 }
 
-input IssueInput {
+input CreateIssueInput {
     title: String!,
     body: String,
     componentIDs: [ID!]!,
@@ -164,6 +169,12 @@ input IssueInput {
     startDate: Date,
     dueDate: Date,
     estimatedTime: TimeSpan,
+    clientMutationID: String
+}
+
+type CreateIssuePayload {
+    clientMutationID: String,
+    issue: Issue
 }
 
 type IssuePage implements Page {
@@ -233,8 +244,17 @@ type IssueComment implements IssueTimelineItem & Comment & Node {
     currentUserCanEdit: Boolean!
 }
 
-input IssueCommentInput {
-    body: String
+input AddIssueCommentInput {
+    body: String!
+    clientMutationID: String
+    issueID: ID!
+}
+
+type AddIssueCommentPayload {
+    comment: IssueComment
+    clientMutationID: String
+    commentEdge: IssuecommentEdge
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type IssueCommentPage implements Page {
@@ -544,7 +564,7 @@ enum IssueTimelineItemType {
     """
     An event when this issue was referenced by an other issue in an IMS or the ccims itself
     """
-    REFERENCED_BY_ISSUE_FOUND,
+    REFERENCED_BY_ISSUE_EVENT,
 
     """
     A link from this issue to another issue was created
@@ -629,17 +649,17 @@ enum IssueTimelineItemType {
     """
     An event if the date the issue gets relevant/starts has changed
     """
-    START_DATE_CHANGED,
+    START_DATE_CHANGED_EVENT,
 
     """
     An event if the date the issue is due on/must be finished by was changed
     """
-    DUE_DATE_CHANGED,
+    DUE_DATE_CHANGED_EVENT,
 
     """
     The estimated time required to resolve this issue was updated
     """
-    ESTIMATED_TIME_CHANGED,
+    ESTIMATED_TIME_CHANGED_EVENT,
 
     """
     Event if the cross component issue was added to another location (another component/another)
