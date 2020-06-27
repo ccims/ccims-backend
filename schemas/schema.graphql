@@ -3,7 +3,7 @@ interface Node {
     id: ID!
 }
 
-interface Connection {
+interface Page {
     pageInfo: PageInfo!
     totalCount: Int!
 }
@@ -21,7 +21,7 @@ type User implements Node {
     id: ID!
 }
 
-type UserConnection implements Connection {
+type UserPage implements Page {
     nodes: [User]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -37,7 +37,7 @@ type Component implements Node {
     id: ID!
 }
 
-type ComponentConnection implements Connection {
+type ComponentPage implements Page {
     nodes: [Component]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -56,7 +56,7 @@ type ComponentInterface {
 type Issue implements Comment {
     id: ID!
     title: String!
-    components(reactions(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentConnection
+    components(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
     body: String
     bodyRendered: String
     createdBy: User
@@ -65,14 +65,15 @@ type Issue implements Comment {
     editedAt: Date
     updatedAt: Date
     isOpen: Boolean!
+    isDuplicate: Boolean!
     issueType: IssueType!
-    linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssueConnection
-    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupConnection
-    assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserConnection
-    label(safter: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelConnection
-    participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserConnection
-    timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemConnection
-    locations(after: ID, before: ID, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationConnection
+    linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
+    assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
+    label(after: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelPage
+    participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
+    timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemPage
+    locations(after: ID, before: ID, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationPage
     viewerCanEdit: Boolean!
     viewerCanComment: Boolean!
     startDate: Date
@@ -80,7 +81,7 @@ type Issue implements Comment {
     estimatedTime: TimeSpan
 }
 
-type IssueConnection implements Connection {
+type IssuePage implements Page {
     nodes: [Issue]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -100,7 +101,7 @@ interface IssueTimelineItem implements Node {
     createdAt: Date!
 }
 
-type IssueTimelineItemConnection implements Connection {
+type IssueTimelineItemPage implements Page {
     nodes: [IssueTimelineItem]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -119,7 +120,7 @@ interface Comment implements Node {
     editedAt: Date
     body: String
     bodyRendered: String
-    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupConnection
+    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     viewerCanEdit: Boolean!
 }
 
@@ -131,11 +132,11 @@ type IssueComment implements IssueTimelineItem {
     editedAt: Date
     body: String
     bodyRendered: String
-    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupConnection
+    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     viewerCanEdit: Boolean!
 }
 
-type IssueCommentConnection implements Connection {
+type IssueCommentPage implements Page {
     nodes: [IssueComment]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -165,7 +166,7 @@ type ReferencedEvent implements IssueTimelineItem {
     sourceURL: String
 }
 
-type MentionedEvent implements IssueTimelineItem {
+type MentionedByOtherEvent implements IssueTimelineItem {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -193,7 +194,7 @@ type UnlinkEvent implements IssueTimelineItem {
 }
 
 #when another issue links this issue
-type LinkedEvent implements IssueTimelineItem {
+type WasLinkedEvent implements IssueTimelineItem {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -202,7 +203,7 @@ type LinkedEvent implements IssueTimelineItem {
 }
 
 #when another issue unlinks this issue
-type UnlinkedEvent implements IssueTimelineItem {
+type WasUnlinkedEvent implements IssueTimelineItem {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -340,6 +341,21 @@ type RemovedLocationEvent implements IssueTimelineItem {
     removedLocation: IssueLocation!
 }
 
+type MarkedAsDuplicateEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    originalIssue: Issue
+}
+
+type UnmarkedAsDuplicateEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+}
+
 
 
 type ReactionGroup {
@@ -347,7 +363,7 @@ type ReactionGroup {
     reaction: String!
 }
 
-type ReactionGroupConnection {
+type ReactionGroupPage {
     nodes: [ReactionGroup]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -364,7 +380,7 @@ type Label implements Node {
     color: Color
 }
 
-type LabelConnection {
+type LabelPage {
     nodes: [Label]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -396,7 +412,7 @@ scalar Color
 #unions
 union IssueLocation = Component | ComponentInterface
 
-type IssueLocationConnection {
+type IssueLocationPage {
     nodes: [AssignTarget]
     pageInfo: PageInfo!
     totalCount: Int!
