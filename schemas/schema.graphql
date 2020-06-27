@@ -27,7 +27,7 @@ type UserConnection implements Connection {
     totalCount: Int!
 }
 
-type UserFilter {
+input UserFilter {
 
 }
 
@@ -43,7 +43,7 @@ type ComponentConnection implements Connection {
     totalCount: Int!
 }
 
-type ComponentFilter {
+input ComponentFilter {
 
 }
 
@@ -55,6 +55,7 @@ type Issue implements Comment {
     body: String!
     bodyRendered: String!
     createdBy: User!
+
 }
 
 type IssueConnection implements Connection {
@@ -63,7 +64,7 @@ type IssueConnection implements Connection {
     totalCount: Int!
 }
 
-type IssueFilter {
+input IssueFilter {
 
 }
 
@@ -74,6 +75,16 @@ interface IssueTimelineItem implements Node {
     id: ID!
     issue: Issue!
     createdBy: User
+}
+
+type IssueTimelineItemConnection implements Connection {
+    nodes: [IssueTimelineItem]
+    pageInfo: PageInfo
+    totalCount: Int!
+}
+
+input IssueTimelineItemFilter {
+
 }
 
 #IssueComment
