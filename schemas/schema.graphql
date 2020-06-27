@@ -44,7 +44,8 @@ type Query {
 }
 
 type Mutation {
-
+    createIssue(input: CreateIssueInput): CreateIssuePayload
+    addIssueComment(input: AddIssueCommentInput): AddIssueCommentPayload
 }
 
 #----------Basic types---------------
