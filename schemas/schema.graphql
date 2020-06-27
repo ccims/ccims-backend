@@ -47,15 +47,34 @@ input ComponentFilter {
 
 }
 
+type ComponentInterface {
+
+}
+
 
 #Issue
 type Issue implements Comment {
     id: ID!
     title: String!
-    body: String!
-    bodyRendered: String!
-    createdBy: User!
-
+    components(reactions(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentConnection
+    body: String
+    bodyRendered: String
+    createdBy: User
+    editedBy: User
+    createdAt: Date
+    editedAt: Date
+    updatedAt: Date
+    isOpen: Boolean!
+    issueType: IssueType!
+    linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssueConnection
+    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupConnection
+    assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserConnection
+    label(safter: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelConnection
+    participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserConnection
+    timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemConnection
+    assignedTo(after: ID, before: ID, filterBy: AssignTargetFilter, first: Int, last: Int): AssignTargetConnection
+    viewerCanEdit: Boolean!
+    viewerCanComment: Boolean!
 }
 
 type IssueConnection implements Connection {
@@ -75,11 +94,12 @@ interface IssueTimelineItem implements Node {
     id: ID!
     issue: Issue!
     createdBy: User
+    createdAt: Date
 }
 
 type IssueTimelineItemConnection implements Connection {
     nodes: [IssueTimelineItem]
-    pageInfo: PageInfo
+    pageInfo: PageInfo!
     totalCount: Int!
 }
 
@@ -90,14 +110,68 @@ input IssueTimelineItemFilter {
 #IssueComment
 interface Comment implements Node {
     id: ID!
-    body: String!
-    bodyRendered: String!
+    createdBy: User
+    editedBy: User
+    createdAt: Date
+    editedAt: Date
+    body: String
+    bodyRendered: String
+    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupConnection
+    viewerCanEdit: Boolean!
 }
 
 type IssueComment implements IssueTimelineItem {
     id: ID!
-    body: String!
-    bodyRendered: String!
+    createdBy: User
+    editedBy: User
+    createdAt: Date
+    editedAt: Date
+    body: String
+    bodyRendered: String
+    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupConnection
+    viewerCanEdit: Boolean!
+}
+
+type IssueCommentConnection implements Connection {
+    nodes: [IssueComment]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+input IssueCommentFilter {
+
+}
+
+type ReactionGroup {
+    users: [User]
+    reaction: String!
+}
+
+type ReactionGroupConnection {
+    nodes: [ReactionGroup]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+input ReactionGroupFilter {
+
+}
+
+type Label implements Node {
+    id: ID!
+    name: String!
+    description: String
+    color: Color
+}
+
+type LabelConnection {
+    nodes: [Label]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+input LabelFilter {
+
 }
 
 #scalars
@@ -105,4 +179,27 @@ enum Priority {
     LOW,
     MEDIUM,
     HIGH
+}
+
+enum IssueType {
+    BUG,
+    FEATURE_REQUEST,
+    UNCLASSIFIED
+}
+
+scalar Date
+
+scalar Color
+
+#unions
+union AssignTarget = Component | ComponentInterface
+
+type AssignTargetConnection {
+    nodes: [AssignTarget]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+input AssignTargetFilter {
+
 }
