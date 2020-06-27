@@ -1,3 +1,5 @@
+
+
 #An object which can be identified by an ID - called a node
 interface Node {
     id: ID!
@@ -68,7 +70,7 @@ type Issue implements Comment {
     updatedAt: Date
     isOpen: Boolean!
     isDuplicate: Boolean!
-    issueCategory: IssueCategory!
+    category: IssueCategory!
     linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
@@ -81,6 +83,13 @@ type Issue implements Comment {
     startDate: Date
     DueDate: Date
     estimatedTime: TimeSpan
+}
+
+input IssueInput {
+    title: String!,
+    body: String,
+    componentID: ID!,
+    category: IssueCategory
 }
 
 type IssuePage implements Page {
@@ -126,7 +135,7 @@ interface Comment implements Node {
     viewerCanEdit: Boolean!
 }
 
-type IssueComment implements IssueTimelineItem,Comment {
+type IssueComment implements IssueTimelineItem & Comment {
     id: ID!
     createdBy: User
     editedBy: User
