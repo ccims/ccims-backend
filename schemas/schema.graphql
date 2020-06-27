@@ -153,7 +153,7 @@ type Issue implements Comment {
     estimatedTime: TimeSpan
 }
 
-input IssueInput {
+input CreateIssueInput {
     title: String!,
     body: String,
     componentIDs: [ID!]!,
@@ -164,6 +164,12 @@ input IssueInput {
     startDate: Date,
     dueDate: Date,
     estimatedTime: TimeSpan,
+    clientMutationID: String
+}
+
+type CreateIssuePayload {
+    clientMutationID: String,
+    issue: Issue
 }
 
 type IssuePage implements Page {
@@ -233,8 +239,17 @@ type IssueComment implements IssueTimelineItem & Comment & Node {
     currentUserCanEdit: Boolean!
 }
 
-input IssueCommentInput {
-    body: String
+input AddIssueCommentInput {
+    body: String!
+    clientMutationID: String
+    issueID: ID!
+}
+
+type AddIssueCommentPayload {
+    comment: IssueComment
+    clientMutationID: String
+    commentEdge: IssuecommentEdge
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type IssueCommentPage implements Page {
@@ -244,7 +259,7 @@ type IssueCommentPage implements Page {
     totalCount: Int!
 }
 
-type IssuecommentEdge {
+type IssueCommentEdge {
     node: IssueComment
     cursor: String
 }
