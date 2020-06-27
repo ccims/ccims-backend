@@ -531,15 +531,44 @@ input LabelFilter {
 }
 
 #-------------------------------------Scalars and enums------------------------------------
+
+"""
+The Priority which an issue has - how urgent it needs to be resolved
+"""
 enum Priority {
+
+    """
+    The issue has a low priority but higher than issues without priority
+    """
     LOW,
+    """
+    The issue has a priority higher than low bot is not absolutely urgent
+    """
     MEDIUM,
+    """
+    Issues with this priority are __very__ urgent and need to be resolved quickly
+    """
     HIGH
 }
 
+"""
+The category of an issue. The issue will be displayed accordingly in the ccims
+"""
 enum IssueCategory {
+
+    """
+    If an issue is classified _bug_ it describes an error, flaw or fault in one ore multiple component(s) or interface(s)
+    """
     BUG,
+
+    """
+    If an issue is defined a _feature request_, it describes a functionality that is to be implemented at some point
+    """
     FEATURE_REQUEST,
+
+    """
+    The category for issues, that either weren't yet assigned to a category or that don't fit into one of the other categories
+    """
     UNCLASSIFIED
 }
 
