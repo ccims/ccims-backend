@@ -498,10 +498,27 @@ enum IssueTimelineItemType {
     UNMARKED_AS_DUPLICATE_EVENT,
 }
 
+"""
+The `Date` scalar is a sting containing a date in a format compatible with _ISO-8601_
+
+Example: `"2011-10-10T14:48:00"`
+"""
 scalar Date
 
+"""
+A integer number representing the length of the time span in millisecons
+
+Example: `60000` (equivalent to a time span of one minute)
+"""
 scalar TimeSpan
 
+"""
+A scalat type representing a color in RGB color space.
+The scalar must be a string in CSS Color Hex format: 
+`#rrggbb` where `rr`, `gg`, `bb` are the hex values between _0_ and _ff_
+
+Example: `#ffff00` (would be a _beautiful_ yellow)
+"""
 scalar Color
 
 #unions
