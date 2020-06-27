@@ -61,7 +61,7 @@ type Issue implements Comment {
     bodyRendered: String
     createdBy: User
     editedBy: User
-    createdAt: Date
+    createdAt: Date!
     editedAt: Date
     updatedAt: Date
     isOpen: Boolean!
@@ -72,9 +72,12 @@ type Issue implements Comment {
     label(safter: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelConnection
     participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserConnection
     timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemConnection
-    assignedTo(after: ID, before: ID, filterBy: AssignTargetFilter, first: Int, last: Int): AssignTargetConnection
+    locations(after: ID, before: ID, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationConnection
     viewerCanEdit: Boolean!
     viewerCanComment: Boolean!
+    startDate: Date
+    DueDate: Date
+    estimatedTime: TimeSpan
 }
 
 type IssueConnection implements Connection {
@@ -94,7 +97,7 @@ interface IssueTimelineItem implements Node {
     id: ID!
     issue: Issue!
     createdBy: User
-    createdAt: Date
+    createdAt: Date!
 }
 
 type IssueTimelineItemConnection implements Connection {
@@ -112,7 +115,7 @@ interface Comment implements Node {
     id: ID!
     createdBy: User
     editedBy: User
-    createdAt: Date
+    createdAt: Date!
     editedAt: Date
     body: String
     bodyRendered: String
@@ -124,7 +127,7 @@ type IssueComment implements IssueTimelineItem {
     id: ID!
     createdBy: User
     editedBy: User
-    createdAt: Date
+    createdAt: Date!
     editedAt: Date
     body: String
     bodyRendered: String
@@ -141,6 +144,203 @@ type IssueCommentConnection implements Connection {
 input IssueCommentFilter {
 
 }
+
+type DeletedIssueComment implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    deletedBy: User
+    deletedAt: Date
+}
+
+#when mentioned in a commit or a pull request
+type ReferencedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    component: Component
+    source: String
+    sourceURL: String
+}
+
+type MentionedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    mentionedAt: Issue
+    mentionedInComment: IssueComment
+}
+
+#when an user actively links another issue
+type LinkEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    linkedIssue: Issue
+}
+
+# when an user unlinks another issue
+type UnlinkEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    removedLinkedIssue: Issue
+}
+
+#when another issue links this issue
+type LinkedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    linkedBy: Issue
+}
+
+#when another issue unlinks this issue
+type UnlinkedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    unlinkedBy: Issue
+}
+
+type LabeledEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    label: Label!
+}
+
+type UnlabledEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    removedLabel: Label!
+}
+
+type PinnedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+}
+
+type UnpinnedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+}
+
+type RenamedTitleEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    oldTitle: String!
+    newTitle: String!
+}
+
+type TypeChangedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    oldType: IssueType!
+    newType: IssueType!
+}
+
+type AssignedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    assignee: User!
+}
+
+type UnassignedEvet implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    removedAssignee: User!
+}
+
+type ClosedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+}
+
+type ReopenedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+}
+
+type PriorityChangedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    oldPriority: Priority
+    newPriority: Priority
+}
+
+type StartDateChangedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    oldStartDate: Date
+    newStartDate: Date
+}
+
+type DueDateChangedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    oldDueDate: Date
+    newDueDate: Date
+}
+
+type EstimatedTimeChangedEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    oldEstimatedTime: TimeSpan
+    newEstimatedTime: TimeSpan
+}
+
+type AddedLocationEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    location: IssueLocation!
+}
+
+type RemovedLocationEvent implements IssueTimelineItem {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    removedLocation: IssueLocation!
+}
+
+
 
 type ReactionGroup {
     users: [User]
@@ -189,17 +389,19 @@ enum IssueType {
 
 scalar Date
 
+scalar TimeSpan
+
 scalar Color
 
 #unions
-union AssignTarget = Component | ComponentInterface
+union IssueLocation = Component | ComponentInterface
 
-type AssignTargetConnection {
+type IssueLocationConnection {
     nodes: [AssignTarget]
     pageInfo: PageInfo!
     totalCount: Int!
 }
 
-input AssignTargetFilter {
+input IssueLocationFilter {
 
 }
