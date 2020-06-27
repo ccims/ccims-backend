@@ -99,7 +99,7 @@ type IssueComment implements IssueTimelineItem {
     bodyRendered: String!
 }
 
-//scalars
+#scalars
 enum Priority {
     LOW,
     MEDIUM,
