@@ -1,6 +1,6 @@
 #General Interfaces
 interface Node {
-    id: String!
+    id: ID!
 }
 
 interface Connection {
@@ -8,19 +8,20 @@ interface Connection {
     totalCount: Int!
 }
 
+type PageInfo {
+    startID: ID
+    endID: ID
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+}
+
 
 #User
 type User implements Node {
-    id: String!
-}
-
-type UserEdge {
-    cursor: String!
-    node: User
+    id: ID!
 }
 
 type UserConnection implements Connection {
-    edges: [UserEdge]
     nodes: [User]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -33,16 +34,10 @@ type UserFilter {
 
 #Component
 type Component implements Node {
-    id: String!
-}
-
-type ComponentEdge {
-    cursor: String!
-    node: Component
+    id: ID!
 }
 
 type ComponentConnection implements Connection {
-    edges: [ComponentEdge]
     nodes: [Component]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -55,19 +50,14 @@ type ComponentFilter {
 
 #Issue
 type Issue implements Comment {
-    id: String!
+    id: ID!
     title: String!
     body: String!
     bodyRendered: String!
-}
-
-type IssueEdge {
-    cursor: String!
-    node: Issue
+    createdBy: User!
 }
 
 type IssueConnection implements Connection {
-    edges: [IssueEdge]
     nodes: [Issue]
     pageInfo: PageInfo!
     totalCount: Int!
@@ -81,20 +71,20 @@ type IssueFilter {
 #Issue timeline items
 
 interface IssueTimelineItem implements Node {
-    id: String!
+    id: ID!
     issue: Issue!
-    user: User
+    createdBy: User
 }
 
 #IssueComment
 interface Comment implements Node {
-    id: String!
+    id: ID!
     body: String!
     bodyRendered: String!
 }
 
 type IssueComment implements IssueTimelineItem {
-    id: String!
+    id: ID!
     body: String!
     bodyRendered: String!
 }
