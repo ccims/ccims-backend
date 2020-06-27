@@ -1,4 +1,6 @@
-
+type Query {
+    issues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+}
 
 #An object which can be identified by an ID - called a node
 interface Node {
@@ -105,7 +107,7 @@ input IssueFilter {
 
 #Issue timeline items
 
-interface IssueTimelineItem implements Node {
+type IssueTimelineItem implements Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -123,7 +125,7 @@ input IssueTimelineItemFilter {
 }
 
 #IssueComment
-interface Comment implements Node {
+type Comment implements Node {
     id: ID!
     createdBy: User
     editedBy: User
@@ -381,7 +383,7 @@ type ReactionGroupPage {
 }
 
 input ReactionGroupFilter {
-
+    reaction: String
 }
 
 type Label implements Node {
@@ -398,7 +400,7 @@ type LabelPage {
 }
 
 input LabelFilter {
-
+    name: String
 }
 
 #scalars
