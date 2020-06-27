@@ -1,11 +1,11 @@
-#The root api types
+#The root API types
 
 """
 All queries
 """
 type Query {
     """
-    Requets an object (node) using the given ID. If the given ID is invalid an error will be returned
+    Requests an object (node) using the given ID. If the given ID is invalid an error will be returned
     """
     node (
         """
@@ -15,7 +15,7 @@ type Query {
     ): Node
 
     """
-    Requests issues in this instace of ccims
+    Requests issues in this instance of ccims
     """
     issues(
         """
@@ -54,7 +54,7 @@ An object which can be identified by an ID - called a node
 """
 interface Node {
     """
-    The ID of this node. Evey node will have an non-empty and non-null edge.
+    The ID of this node. Every node will have an non-empty and non-null edge.
 
     If this is ever empty or null, something went wrong.
     """
@@ -260,7 +260,7 @@ type AddIssueCommentPayload {
 
 type IssueCommentPage implements Page {
     nodes: [IssueComment]
-    edges: [IssuecommentEdge]
+    edges: [IssueCommentEdge]
     pageInfo: PageInfo!
     totalCount: Int!
 }
@@ -339,7 +339,7 @@ type WasUnlinkedEvent implements IssueTimelineItem & Node {
     unlinkedBy: Issue
 }
 
-type LabeledEvent implements IssueTimelineItem & Node {
+type LabelledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -347,7 +347,7 @@ type LabeledEvent implements IssueTimelineItem & Node {
     label: Label!
 }
 
-type UnlabledEvent implements IssueTimelineItem & Node {
+type UnlabelledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -511,7 +511,7 @@ type Label implements Node {
     id: ID!
     name: String!
     description: String
-    color: Color
+    colour: Colour
 }
 
 type LabelPage {
@@ -530,7 +530,7 @@ input LabelFilter {
     name: String
 }
 
-#scalars
+#-------------------------------------Scalars and enums------------------------------------
 enum Priority {
     LOW,
     MEDIUM,
@@ -543,42 +543,172 @@ enum IssueCategory {
     UNCLASSIFIED
 }
 
+"""
+The type of a timeline item/event so it can be filtered for <sup>(because GraphQL doesn't allow to filter for a type)</sup>
+"""
 enum IssueTimelineItemType {
+    """
+    A still visible comment on an issue (not including the actual issue text)
+    """
     ISSUE_COMMENT,
+
+    """
+    A comment that has been deleted by a user. This will contain no text etc., but a message should be shown in place of the comment stating that this is a deleted comment
+    """
     DELETED_ISSUE_COMMENT,
+
+    """
+    An event when this issue was referenced by an element in an IMS that is not an issue (e.g. in a commit message, pull request etc.)
+    """
     REFERENCED_BY_OTHER_EVENT,
+
+    """
+    An event when this issue was referenced by an other issue in an IMS or the ccims itself
+    """
     REFERENCED_BY_ISSUE_EVENT,
+
+    """
+    A link from this issue to another issue was created
+    """
     LINK_EVENT,
+
+    """
+    A link from this issue to another issue was removed
+    """
     UNLINK_EVENT,
+
+    """
+    An event if this issue was linked to in another issue
+    """
     WAS_LINKED_EVENT,
+
+    """
+    An event if the link from another issue to this one was removed
+    """
     WAS_UNLINKED_EVENT,
-    LABELED_EVENT,
-    UNLABELED_EVENT,
+
+
+    """
+    A label was added to this issue
+    """
+    LABELLED_EVENT,
+
+    """
+    A label was removed from tis issue
+    """
+    UNLABELLED_EVENT,
+
+    """
+    This issue was pinned as important issue in the ccims.
+    __This event won't be synced along all subscribed issue management systems__
+    """
     PINNED_EVENT,
+
+    """
+    This issue was unpinned in the ccims.
+    __This event won't be synced along all subscribed issue management systems__
+    """
     UNPINNED_EVENT,
+
+    """
+    Occurs if the title of the issue has been changed
+    """
     RENAMED_TITLE_EVENT,
+
+    """
+    An event if the category (see `enum IssueCategory`) of the issue has been changed
+    """
     CATEGORY_CHANGED_EVENT,
+
+    """
+    If a user has been assigned as responsible person for this issue
+    """
     ASSIGNED_EVENT,
+
+    """
+    If a user has been unassigned from this issue and is no longer responsible
+    """
     UNASSIGNED_EVENT,
+
+    """
+    Happens if the issue has been closed by anybody
+    """
     CLOSED_EVENT,
+
+    """
+    Happens if the issue has been reopened after being closed by anybody.
+
+    _This event doesn't occur on the first opening of the issue_
+    """
     REOPENED_EVENT,
+
+    """
+    If the issue priority was changed (see `enum Priority`)
+    """
     PRIORITY_CHANGED_EVENT,
+
+    """
+    An event if the date the issue gets relevant/starts has changed
+    """
     START_DATE_CHANGED_EVENT,
+
+    """
+    An event if the date the issue is due on/must be finished by was changed
+    """
     DUE_DATE_CHANGED_EVENT,
+
+    """
+    The estimated time required to resolve this issue was updated
+    """
     ESTIMATED_TIME_CHANGED_EVENT,
+
+    """
+    Event if the cross component issue was added to another location (another component/another)
+    """
     ADDED_LOCATION_EVENT,
+
+    """
+    Event if the cross component issue was removed from a location (another component/another)
+    """
     REMOVED_LOCATION_EVENT,
+
+    """
+    Occurs if this issue was marked as duplicate of some other issue which is known to the ccims.
+    
+    (if the issue in unknown to the ccims at time of marking it as a duplicate; it's not guaranteed, that the mark will be synced)
+    """
     MARKED_AS_DUPLICATE_EVENT,
+
+    """
+    An event if the issue is no longer a duplicate of another issue
+    """
     UNMARKED_AS_DUPLICATE_EVENT,
 }
 
+"""
+The `Date` scalar is a sting containing a date in a format compatible with _ISO-8601_
+
+Example: `"2011-10-10T14:48:00"`
+"""
 scalar Date
 
+"""
+A integer number representing the length of the time span in milliseconds
+
+Example: `60000` (equivalent to a time span of one minute)
+"""
 scalar TimeSpan
 
-scalar Color
+"""
+A scalar type representing a colour in RGB colour space.
+The scalar must be a string in CSS Colour Hex format: 
+`#rrggbb` where `rr`, `gg`, `bb` are the hex values between _0_ and _ff_
 
-#unions
+Example: `#ffff00` (would be a _beautiful_ yellow)
+"""
+scalar Colour
+
+#--------------------------------Union types-------------------------------------------------
 union IssueLocation = Component | ComponentInterface
 
 type IssueLocationPage {
