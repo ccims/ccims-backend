@@ -376,7 +376,7 @@ type WasUnlinkedEvent implements IssueTimelineItem & Node {
     unlinkedBy: Issue
 }
 
-type LabelledEvent implements IssueTimelineItem & Node {
+type LabeledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -393,11 +393,13 @@ input AddLabelInput {
 type AddLabelPayload {
     clientMutationID: String
     label: Label
+    issue: Issue
+    event: LabeledEvent
     labelEdge: LabelEdge
     timelineEdge: IssueTimelineItemEdge
 }
 
-type UnlabelledEvent implements IssueTimelineItem & Node {
+type UnlabeledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -414,6 +416,8 @@ input RemoveLabelInput {
 type RemoveLabelPayload {
     clientMutationID: String
     label: Label
+    issue: Issue
+    event: UnlabeledEvent
     timelineEdge: IssueTimelineItemEdge
 }
 
@@ -434,6 +438,7 @@ type PinIssuePayload {
     clientMutationID:
     pinnedIssue: Issue
     component: Component
+    event: PinnedEvent
     timelineEdge: IssueTimeline
 }
 
@@ -454,6 +459,7 @@ type UnpinIssuePayload {
     clientMutationID:
     unpinnedIssue: Issue
     component: Component
+    event: UnpinnedEvent
     timelineEdge: IssueTimeline
 }
 
@@ -475,6 +481,7 @@ input RenameTitleInput {
 type RenameTitlePayload {
     clientMutationID: String
     issue: Issue
+    event: RenamedTitleEvent
     timelineEdge: IssueTimelineItemEdge
 }
 
@@ -487,6 +494,19 @@ type CategoryChangedEvent implements IssueTimelineItem & Node {
     newType: IssueCategory!
 }
 
+input ChangeCategoryInput {
+    clientMutationID: String
+    issue: ID!
+    newCategory: IssueCategory!
+}
+
+type ChangeCategoryPayload {
+    clientMutationID: String
+    issue: Issue
+    event: CategoryChangedEvent
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type AssignedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
@@ -495,12 +515,41 @@ type AssignedEvent implements IssueTimelineItem & Node {
     assignee: User!
 }
 
-type UnassignedEvet implements IssueTimelineItem & Node {
+input AddAssigneeInput {
+    clientMutationID: String
+    issue: ID!
+    userToAssign: ID!
+}
+
+type  AddAssigneePayload {
+    clientMutationID: String
+    issue: Issue
+    assignee: User
+    event: AssignedEvent
+    assigneeEdge: UserEdge
+    timelineEdge: IssueTimelineItemEdge
+}
+
+type UnassignedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
     removedAssignee: User!
+}
+
+input RemoveAssigneeInput {
+    clientMutationID: String
+    issue: ID!
+    userToUnassign: ID!
+}
+
+type  RemoveAssigneePayload {
+    clientMutationID: String
+    issue: Issue
+    unassignedUser: User
+    event: UnassignedEvent
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type ClosedEvent implements IssueTimelineItem & Node {
@@ -510,11 +559,35 @@ type ClosedEvent implements IssueTimelineItem & Node {
     createdAt: Date!
 }
 
+input CloseIssueInput {
+    clientMutationID: String
+    issueToClose: ID!
+}
+
+type CloseIssuePayload {
+    clientMutationID: String
+    closedIssue: Issue
+    event: ClosedEvent
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type ReopenedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
+}
+
+input ReopenIssueInput {
+    clientMutationID: String
+    issueToReopen: ID!
+}
+
+type ReopenIssuePayload {
+    clientMutationID: ID!
+    reopenedIssue: Issue
+    event: ReopenedEvent
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type PriorityChangedEvent implements IssueTimelineItem & Node {
@@ -526,6 +599,19 @@ type PriorityChangedEvent implements IssueTimelineItem & Node {
     newPriority: Priority
 }
 
+input ChangePriority {
+    clientMutationID: String
+    issue: ID!
+    newPriority: Priority!
+}
+
+type ChangePriorityPayload {
+    clientMutationID: String
+    issue: Issue
+    event: PriorityChangedEvent
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type StartDateChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
@@ -533,6 +619,19 @@ type StartDateChangedEvent implements IssueTimelineItem & Node {
     createdAt: Date!
     oldStartDate: Date
     newStartDate: Date
+}
+
+input ChangeStartDateInput {
+    clientMutationID: String
+    issue: ID!
+    newStartDate: Date!
+}
+
+type ChangeStartDatePayload {
+    clientMutationID: String
+    issue: Issue
+    event: StartDateChangedEvent
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type DueDateChangedEvent implements IssueTimelineItem & Node {
@@ -544,6 +643,19 @@ type DueDateChangedEvent implements IssueTimelineItem & Node {
     newDueDate: Date
 }
 
+input ChangeDueDateInput {
+    clientMutationID: String
+    issue: ID!
+    newDueDate: Date!
+}
+
+type ChangeDueDatePayload {
+    clientMutationID: String
+    issue: Issue
+    event: DueDateChangedEvent
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type EstimatedTimeChangedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
@@ -551,6 +663,19 @@ type EstimatedTimeChangedEvent implements IssueTimelineItem & Node {
     createdAt: Date!
     oldEstimatedTime: TimeSpan
     newEstimatedTime: TimeSpan
+}
+
+input ChangeEstimatedTime {
+    clientMutationID: String
+    issue: ID!
+    newEstimatedTime: TimeSpan!
+}
+
+type ChangeEstimatedTimePayload {
+    clientMutationID: String
+    issue: Issue
+    event: EstimatedTimeChangedEvent
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type AddedLocationEvent implements IssueTimelineItem & Node {
@@ -561,12 +686,41 @@ type AddedLocationEvent implements IssueTimelineItem & Node {
     location: IssueLocation!
 }
 
+input AddLocationInput {
+    clientMutationID: String
+    issue: ID!
+    locationToAdd: ID!
+}
+
+type AddLocationPayload {
+    clientMutationID: String
+    issue: Issue
+    addedLocation: IssueLocation
+    event: AddedLocationEvent
+    locationEdge: IssueLocationEdge
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type RemovedLocationEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
     removedLocation: IssueLocation!
+}
+
+input RemoveLocationInput {
+    clientMutationID: String
+    issue: ID!
+    locationToRemove: ID!
+}
+
+type RemoveLocationPayload {
+    clientMutationID: String
+    issue: Issue
+    removedLocation: IssueLocation
+    event: AddedLocationEvent
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type MarkedAsDuplicateEvent implements IssueTimelineItem & Node {
@@ -577,11 +731,37 @@ type MarkedAsDuplicateEvent implements IssueTimelineItem & Node {
     originalIssue: Issue
 }
 
+input MarkAsDuplicateInput {
+    clientMutationID: String
+    issue: ID!
+    originalIssue: ID!
+}
+
+type MarkAsDuplicatePayload {
+    clientMutationID: String
+    issue: Issue
+    originalIssue: Issue
+    event: MarkedAsDuplicateEvent
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type UnmarkedAsDuplicateEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
+}
+
+input UnmarkAsDuplicateInput {
+    clientMutationID: String
+    issue: ID!
+}
+
+type UnmarkAsDuplicatePayload {
+    clientMutationID: String
+    issue: Issue
+    event: MarkedAsDuplicateEvent
+    timelineEdge: IssueTimelineItemEdge
 }
 
 
