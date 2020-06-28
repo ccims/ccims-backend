@@ -739,7 +739,7 @@ type WasUnlinkedEvent implements IssueTimelineItem & Node {
     unlinkedBy: Issue
 }
 
-type LabeledEvent implements IssueTimelineItem & Node {
+type LabelledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -757,12 +757,12 @@ type AddLabelPayload {
     clientMutationID: String
     label: Label
     issue: Issue
-    event: LabeledEvent
+    event: LabelledEvent
     labelEdge: LabelEdge
     timelineEdge: IssueTimelineItemEdge
 }
 
-type UnlabeledEvent implements IssueTimelineItem & Node {
+type UnlabelledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -780,7 +780,7 @@ type RemoveLabelPayload {
     clientMutationID: String
     label: Label
     issue: Issue
-    event: UnlabeledEvent
+    event: UnlabelledEvent
     timelineEdge: IssueTimelineItemEdge
 }
 
@@ -1205,11 +1205,11 @@ The type of the Issue management system. Currently only GitHub and ccims interna
 """
 enum IMSType {
     """
-    ccims itself is the oly ims for the component, there is no externeral ims
+    ccims itself is the only IMS for the component, there is no external IMS
     """
     CCIMS
     """
-    GitHub (or GitHub enterprise server) is the ims for the component
+    GitHub (or GitHub enterprise server) is the IMS for the component
     """
     GITHUB
 }
