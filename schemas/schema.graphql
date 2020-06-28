@@ -255,7 +255,7 @@ input AddIssueCommentInput {
 type AddIssueCommentPayload {
     comment: IssueComment
     clientMutationID: String
-    commentEdge: IssuecommentEdge
+    commentEdge: IssueCommentEdge
     timelineEdge: IssueTimelineItemEdge
 }
 
