@@ -149,6 +149,7 @@ type Issue implements Comment {
     assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
     labels(after: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelPage
     participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
+    pinnedOn(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
     timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemPage
     locations(after: ID, before: ID, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationPage
     currentUserCanEdit: Boolean!
