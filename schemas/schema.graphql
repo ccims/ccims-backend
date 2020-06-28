@@ -125,7 +125,8 @@ input ComponentFilter {
     name: String
 }
 
-type ComponentInterface {
+type ComponentInterface implements Node {
+    id: ID!
     name: String!
 }
 
@@ -191,8 +192,132 @@ type IssueEdge {
     cursor: String
 }
 
+"""
+Filters for Issues. All parameters given in this filter will be connected via _AND_
+
+Not specific issues in issue management systems but the issue in the ccims
+"""
 input IssueFilter {
-    title: String
+    """
+    The title of the issue must match any of the given strings
+    """
+    title: [String!]
+    """
+    The issue must be on at least one of the components matched by this component filter
+    """
+    components: ComponentFilter
+    """
+    The body text of this issue must match this given __RegEx__
+    """
+    body: String
+    """
+    The id of the user creating the issue must be any of the given ones
+    """
+    createdBy: [ID!]
+    """
+    The id of the user last editing the issue must match any of the ones in the list
+    """
+    editedBy: [ID!]
+    """
+    The issue must have been created __after__ the given date (inclusive)
+    """
+    createdAfter: Date
+    """
+    The issue must have been created __before__ the given date (inclusive)
+    """
+    createdBefore: Date
+    """
+    The issue must have been last edited __after__ the given date (inclusive)
+    """
+    editedAfter: Date
+    """
+    The issue must have been last edited __before__ the given date (inclusive)
+    """
+    editedBefore: Date
+    """
+    The last event in this issue must have occurred __after__ the given date (inclusive)
+    """
+    updatedAfter: Date
+    """
+    The last event in this issue must have occurred __before__ the given date (inclusive)
+    """
+    updatedBefore: Date
+    """
+    If given, filters for opened/closed issues
+    """
+    isOpen: Boolean
+    """
+    If given, filters for issues which are/aren't duplicates of another issue
+    """
+    isDuplicate: Boolean
+    """
+    The issue must have any of the given categories to match the filter
+    """
+    category: [IssueCategory!]
+    """
+    The issue must have at least one linked issue which matches any one of the issues matched by the given IssueFilter
+    """
+    linkedIssues: IssueFilters
+    """
+    The issue (body text) must have all the reactions in one of the lists given.
+    """
+    reactions: [[String!]!]
+    """
+    Any of the users with the given ids must be an assignee to the issue for it to match this filter
+    """
+    assignees: [ID!]
+    """
+    The issue must have all the labels of at least that are matched by at least one of the given label filters
+    """
+    labels: [LabelFilter!]
+    """
+    Any of the users with the given ids must be a participant to the issue for it to match this filter
+    """
+    participants: [ID!]
+    """
+    The issue must be assigned to at least one of the locations with the given ids
+    """
+    locations: [ID!]
+    """
+    If given filters for issues the current user is allowed/not allowed to edit (the title and body text)
+    """
+    currentUserCanEdit: Boolean
+    """
+    If given filters for issues the current user is allowed/not allowed to write new comments on
+    """
+    currentUserCanComment: Boolean
+    """
+    Filters for all issues that have a start date __after__ the give date
+    """
+    startDateAfter: Date
+    """
+    Filters for all issues that have a start date __before__ the give date
+    """
+    startDateBefore: Date
+    """
+    Filters for all issues that have a due date __after__ the give date
+    """
+    dueDateAfter: Date
+    """
+    Filters for all issues that have a due date __before__ the give date
+    """
+    dueDateBefore: Date
+    """
+    Matches all issues that have an estimated time __greater or equal__ than the given one
+    """
+    estimatedTimeGreaterThan: TimeSpan
+    """
+    Matches all issues that have an estimated time __lower or equal__ than the given one
+    """
+    estimatedTimeLowerThan: TimeSpan
+    """
+    Matches all issues that have an actual spent time __greater or equal__ than the given one
+    """
+    spentTimeGreaterThan: TimeSpan
+    """
+    Matches all issues that have an actual spent time __lower or equal__ than the given one
+    """
+    spentTimeLowerThan: TimeSpan
 }
 
 
@@ -217,7 +342,7 @@ type IssueTimelineItemEdge {
 }
 
 """
-Filters for certain timeline events.
+Filters for certain timeline events. All parameters given in this filter will be connected via _AND_
 
 __Please note:__ It's currently __not__ possible to filter for specific properties of an event. Might be added in future
 """
@@ -288,7 +413,7 @@ type IssueCommentEdge {
 }
 
 """
-Filter for comments on issues (not including the issue bodies themselves)
+Filter for comments on issues (not including the issue bodies themselves). All parameters given in this filter will be connected via _AND_
 """
 input IssueCommentFilter {
     """
@@ -662,7 +787,7 @@ type ReactionGroupEdge {
 }
 
 """
-A filter for reaction groups (a reaction together with the users who reacted)
+A filter for reaction groups (a reaction together with the users who reacted). All parameters given in this filter will be connected via _AND_
 """
 input ReactionGroupFilter {
     """
@@ -695,7 +820,7 @@ type LabelEdge {
 }
 
 """
-A Filter data input for labels
+A Filter data input for labels.  All parameters given in this filter will be connected via _AND_
 """
 input LabelFilter {
     """
