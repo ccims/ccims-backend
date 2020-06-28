@@ -107,6 +107,12 @@ type PageInfo {
 type User implements Node {
     id: ID!
     username: String!
+    displayName: String
+    email: String!
+    projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int): ProjectPage
+    assignedToIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    participantOfIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    issueComments(after: String, before: String, filterBy: IssueCommentFilter, first: Int, last: Int): IssueCommentPage
 }
 
 type UserPage implements Page {
@@ -121,8 +127,38 @@ type UserEdge {
     cursor: String!
 }
 
+"""
+Filter for a user of the system. All parameters given in this filter will be connected via _AND_
+"""
 input UserFilter {
-    username: String
+    """
+    Any of the strings must match the users username
+    """
+    username: [String!]
+    """
+    The users username must match this given __RegEx__
+    """
+    displayName: String
+    """
+    The mail address of the user must match any of the ones given
+    """
+    email: [String!]
+    """
+    The user must be member of at least one of the projects with the given ids
+    """
+    projects: [ID!]
+    """
+    The user must be assigned to at least one of the issues with the given ids
+    """
+    assignedToIssues: [ID!]
+    """
+    The user must be participant of at least one of the issues with the given ids
+    """
+    participantOfIssues: [ID!]
+    """
+    The user must have written at least one of the comments with the given ids
+    """
+    issueComments: [ID!]
 }
 
 #-----------------------------Project--------------------------
@@ -161,7 +197,7 @@ input CreateProjectInput {
     """
     components: [ID!]
     """
-    Th ids of all users which are part of this project. If not given, the owner user will be added automatically
+    The ids of all users which are part of this project. If not given, the owner user will be added automatically
     """
     users: [ID!]
     """
@@ -244,6 +280,7 @@ type Issue implements Comment {
     isOpen: Boolean!
     isDuplicate: Boolean!
     category: IssueCategory!
+    issueComments(after: String, before: String, filterBy: IssueCommentFilter, first: Int, last: Int): IssueCommentPage
     linkedIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     assignees(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
