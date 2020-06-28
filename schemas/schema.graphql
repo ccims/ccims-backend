@@ -236,11 +236,15 @@ input ProjectFilter {
 #------------------------------Component------------------------------
 type Component implements Node {
     id: ID!
-    name: String
+    name: String!
+    owner: User
     description: String
     issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int): ProjectPage
-    
+    interfaces(after: String, before: String, filterBy: ComponentInterfaceFilter, first: Int, last: Int): ComponentInterfacePage
+    consumedInterfaces(after: String, before: String, filterBy: ComponentInterfaceFilter, first: Int, last: Int): ComponentInterfacePage
+    imsType: IMSType!
+    imsData: JSON!
 }
 
 type ComponentPage implements Page {
@@ -262,6 +266,26 @@ input ComponentFilter {
 type ComponentInterface implements Node {
     id: ID!
     name: String!
+    owner: User!
+    description: String
+    component: Component!
+    consumedBy(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
+}
+
+type ComponentInterfacePage {
+    nodes: [ComponentInterface]
+    edges: [ComponentInterfaceEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type ComponentInterfaceEdge {
+    node: ComponentInterface
+    cursor: String
+}
+
+type ComponentInterfaceFilter {
+
 }
 
 
@@ -1177,6 +1201,20 @@ input LabelFilter {
 #-------------------------------------Scalars and enums------------------------------------
 
 """
+The type of the Issue management system. Currently only GitHub and ccims internal are available
+"""
+enum IMSType {
+    """
+    ccims itself is the oly ims for the component, there is no externeral ims
+    """
+    CCIMS
+    """
+    GitHub (or GitHub enterprise server) is the ims for the component
+    """
+    GITHUB
+}
+
+"""
 The Priority which an issue has - how urgent it needs to be resolved
 """
 enum Priority {
@@ -1380,6 +1418,12 @@ The scalar must be a string in CSS Colour Hex format:
 Example: `#ffff00` (would be a _beautiful_ yellow)
 """
 scalar Colour
+
+"""
+The `JSON`scalar is a string in the a JSON format
+Example: `{"numbers"`: [1,2,3,4]}`
+"""
+scalar JSON
 
 #--------------------------------Union types-------------------------------------------------
 union IssueLocation = Component | ComponentInterface
