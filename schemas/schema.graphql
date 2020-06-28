@@ -21,11 +21,11 @@ type Query {
         """
         Returns all issues in the system that match the other inputs after the given one (inclusive)
         """
-        after: ID, 
+        after: String, 
         """
         Returns all issues in the system that match the other inputs before the given one (exclusive)
         """
-        before: ID,
+        before: String,
         """
         Filters the issues to return by the specified criteria. A returned issue will match all of the given parameters
         """
@@ -132,10 +132,10 @@ input UserFilter {
 type Project implements Node {
     id: ID!
     name: String!
-    components(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
-    users(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
+    components(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
+    users(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
     owner: User!
-    issues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
 }
 
 type ProjectPage implements Page {
@@ -156,8 +156,8 @@ type Component implements Node {
     id: ID!
     name: String
     description: String
-    issues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    projects(after: ID, before: ID, filterBy: ProjectFilter, first: Int, last: Int)
+    issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int)
 }
 
 type ComponentPage implements Page {
@@ -186,7 +186,7 @@ type ComponentInterface implements Node {
 type Issue implements Comment {
     id: ID!
     title: String!
-    components(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
+    components(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
     body: String
     bodyRendered: String
     createdBy: User
@@ -197,14 +197,14 @@ type Issue implements Comment {
     isOpen: Boolean!
     isDuplicate: Boolean!
     category: IssueCategory!
-    linkedIssues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
-    assignees(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
-    labels(after: ID, before: ID, filterBy: LabelFilter, first: Int, last: Int): LabelPage
-    participants(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
-    pinnedOn(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
-    timeline(after: ID, before: ID, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemPage
-    locations(after: ID, before: ID, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationPage
+    linkedIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
+    assignees(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
+    labels(after: String, before: String, filterBy: LabelFilter, first: Int, last: Int): LabelPage
+    participants(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
+    pinnedOn(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
+    timeline(after: String, before: String, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemPage
+    locations(after: String, before: String, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationPage
     currentUserCanEdit: Boolean!
     currentUserCanComment: Boolean!
     startDate: Date
@@ -422,7 +422,7 @@ interface Comment {
     editedAt: Date
     body: String
     bodyRendered: String
-    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
+    reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     currentUserCanEdit: Boolean!
 }
 
@@ -455,7 +455,7 @@ type IssueComment implements IssueTimelineItem & Comment & Node {
     editedAt: Date
     body: String
     bodyRendered: String
-    reactions(after: ID, before: ID, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
+    reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
     currentUserCanEdit: Boolean!
 }
 
