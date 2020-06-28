@@ -271,8 +271,50 @@ type IssueCommentEdge {
     cursor: String
 }
 
+"""
+Filter for comments on issues (not including the issue bodies themselves)
+"""
 input IssueCommentFilter {
-    createdBy: ID
+    """
+    The id of the issue the comment belongs to must match any of the given ids
+    """
+    issue: [ID!]
+    """
+    The id of the user creating the comment. Must match any one of the given ids
+    """
+    createdBy: [ID!]
+    """
+    The id of the user who __last__ edited the comment must match any of the given ids
+    """
+    editedBy: [ID!]
+    """
+    Match all comments created after the given date (inclusive)
+    """
+    createdAfter: Date
+    """
+    Match all comments created before the given date (inclusive)
+    """
+    createdBefore: Date
+    """
+    Match all comments last edited after the given date (inclusive)
+    """
+    editedAfter: Date
+    """
+    Match all comments last edited before the given date (inclusive)
+    """
+    editedBefore: Date
+    """
+    The body of a comment must match this __RegEx__ to match the filter
+    """
+    body: String
+    """
+    A comment must have all the reactions in one of the lists given.
+    """
+    reactions: [[String!]!]
+    """
+    If given, filters for comments which the user either has or hasn't got edit permissions
+    """
+    currentUserCanEdit: Boolean
 }
 
 type DeletedIssueComment implements IssueTimelineItem & Node {
@@ -603,8 +645,18 @@ type ReactionGroupEdge {
     cursor: String
 }
 
+"""
+A filter for reaction groups (a reaction together with the users who reacted)
+"""
 input ReactionGroupFilter {
-    reaction: String
+    """
+    The reactions name must match any one or more of the given strings
+    """
+    reaction: [String!]
+    """
+    A list of Users who reacted. Any reaction group which contains at least one of the given users will match the filter
+    """
+    users: [ID!]
 }
 
 type Label implements Node {
@@ -626,8 +678,23 @@ type LabelEdge {
     cursor: String
 }
 
+"""
+A Filter data input for labels
+"""
 input LabelFilter {
-    name: String
+    """
+    A lists of names. The label needs to match any one or more of these.
+    """
+    name: [String!]
+    """
+    The __RegEx__ the description of the label needs to match
+    """
+    description: String
+
+    """
+    A list of label colours. Any one or more of the given colours need to match the labels colour.
+    """
+    colour: [Color!]
 }
 
 #-------------------------------------Scalars and enums------------------------------------
