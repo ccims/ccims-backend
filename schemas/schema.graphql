@@ -39,7 +39,8 @@ type Query {
         If given, the last _n_ issues found in the system (matching the other given parameters) will be returned.
         If this is given, `first` can't be given or an error will be returned
         """
-        last: Int): IssuePage
+        last: Int
+    ): IssuePage
 
 }
 
@@ -160,21 +161,21 @@ type Issue implements Comment {
 }
 
 input CreateIssueInput {
-    title: String!,
-    body: String,
-    componentIDs: [ID!]!,
-    category: IssueCategory,
-    labels: [ID!],
-    assignees: [ID!],
-    locations: [ID!],
-    startDate: Date,
-    dueDate: Date,
-    estimatedTime: TimeSpan,
+    title: String!
+    body: String
+    componentIDs: [ID!]!
+    category: IssueCategory
+    labels: [ID!]
+    assignees: [ID!]
+    locations: [ID!]
+    startDate: Date
+    dueDate: Date
+    estimatedTime: TimeSpan
     clientMutationID: String
 }
 
 type CreateIssuePayload {
-    clientMutationID: String,
+    clientMutationID: String
     issue: Issue
 }
 
@@ -430,10 +431,10 @@ input PinIssueInput {
 }
 
 type PinIssuePayload {
-    clientMutationID:
+    clientMutationID: String
     pinnedIssue: Issue
     component: Component
-    timelineEdge: IssueTimeline
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type UnpinnedEvent implements IssueTimelineItem & Node {
@@ -450,10 +451,10 @@ input UnpinIssueInput {
 }
 
 type UnpinIssuePayload {
-    clientMutationID:
+    clientMutationID: String
     unpinnedIssue: Issue
     component: Component
-    timelineEdge: IssueTimeline
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type RenamedTitleEvent implements IssueTimelineItem & Node {
