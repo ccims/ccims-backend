@@ -105,9 +105,10 @@ type PageInfo {
 }
 
 
-#User
+#----------------------------------User---------------------------------
 type User implements Node {
     id: ID!
+    username: String!
 }
 
 type UserPage implements Page {
@@ -126,8 +127,31 @@ input UserFilter {
     username: String
 }
 
+#-----------------------------Project--------------------------
 
-#Component
+type Project implements Node {
+    id: ID!
+    name: String!
+    components(after: ID, before: ID, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
+    users(after: ID, before: ID, filterBy: UserFilter, first: Int, last: Int): UserPage
+    owner: User!
+    issues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+}
+
+type ProjectPage implements Page {
+    nodes: [Project]
+    edges: [ProjectEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type ProjectEdge {
+    node: Project
+    cursor: String!
+}
+
+
+#------------------------------Component------------------------------
 type Component implements Node {
     id: ID!
 }
@@ -154,7 +178,7 @@ type ComponentInterface implements Node {
 }
 
 
-#Issue
+#-----------------------------------Issue----------------------------------
 type Issue implements Comment {
     id: ID!
     title: String!
@@ -281,7 +305,7 @@ input IssueFilter {
     """
     The issue must have at least one linked issue which matches any one of the issues matched by the given IssueFilter
     """
-    linkedIssues: IssueFilters
+    linkedIssues: IssueFilter
     """
     The issue (body text) must have all the reactions in one of the lists given.
     """
@@ -345,7 +369,7 @@ input IssueFilter {
 }
 
 
-#Issue timeline items
+#------------------------------------------Issue timeline items---------------------------------------
 
 interface IssueTimelineItem {
     issue: Issue!
@@ -385,7 +409,7 @@ input IssueTimelineItemFilter {
     createdBefore: Date
 }
 
-#IssueComment
+#------------------------------------------IssueComment--------------------------------------------
 interface Comment {
     id: ID!
     createdBy: User
@@ -1059,7 +1083,7 @@ input LabelFilter {
     """
     A list of label colours. Any one or more of the given colours need to match the labels colour.
     """
-    colour: [Color!]
+    colour: [Colour!]
 }
 
 #-------------------------------------Scalars and enums------------------------------------
