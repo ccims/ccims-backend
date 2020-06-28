@@ -130,6 +130,10 @@ input UserFilter {
 #Component
 type Component implements Node {
     id: ID!
+    name: String
+    description: String
+    issues(after: ID, before: ID, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    projects(after: ID, before: ID, filterBy: ProjectFilter, first: Int, last: Int)
 }
 
 type ComponentPage implements Page {
