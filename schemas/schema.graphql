@@ -157,7 +157,8 @@ type Component implements Node {
     name: String
     description: String
     issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int)
+    projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int): ProjectPage
+    
 }
 
 type ComponentPage implements Page {
