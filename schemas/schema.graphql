@@ -165,7 +165,7 @@ input CreateIssueInput {
     componentIDs: [ID!]!,
     category: IssueCategory,
     labels: [ID!],
-    assignees: [User!],
+    assignees: [ID!],
     locations: [ID!],
     startDate: Date,
     dueDate: Date,
@@ -283,6 +283,17 @@ type DeletedIssueComment implements IssueTimelineItem & Node {
     deletedAt: Date
 }
 
+input DeleteIssueCommentInput {
+    clientMutationID: String
+    issueComment: ID
+}
+
+type DeleteIssueCommentPayload {
+    clientMutationID: String
+    deletedComment: DeletedIssueComment
+    timelineEdge: IssueTimelineItemEdge
+}
+
 #when mentioned in a commit or a pull request
 type ReferencedByOtherEvent implements IssueTimelineItem & Node {
     id: ID!
@@ -312,6 +323,19 @@ type LinkEvent implements IssueTimelineItem & Node {
     linkedIssue: Issue
 }
 
+input LinkIssueInput {
+    clientMutationID: String,
+    issue: ID!
+    issueToLink: ID!
+}
+
+type LinkIssuePayload {
+    clientMutationID: String
+    linkedIssue: Issue
+    linkedIssueEdge: IssueEdge
+    timelineEdge: IssueTimelineItemEdge
+}
+
 # when an user unlinks another issue
 type UnlinkEvent implements IssueTimelineItem & Node {
     id: ID!
@@ -319,6 +343,18 @@ type UnlinkEvent implements IssueTimelineItem & Node {
     createdBy: User
     createdAt: Date!
     removedLinkedIssue: Issue
+}
+
+input UnlinkIssueInput {
+    clientMutationID: String,
+    issue: ID!
+    issueToUnlink: ID!
+}
+
+type UnlinkIssuePayload {
+    clientMutationID: String
+    unlinkedIssue: Issue
+    timelineEdge: IssueTimelineItemEdge
 }
 
 #when another issue links this issue
@@ -347,12 +383,37 @@ type LabelledEvent implements IssueTimelineItem & Node {
     label: Label!
 }
 
+input AddLabelInput {
+    clientMutationID: String
+    issue: ID!
+    label: ID!
+}
+
+type AddLabelPayload {
+    clientMutationID: String
+    label: Label
+    labelEdge: LabelEdge
+    timelineEdge: IssueTimelineItemEdge
+}
+
 type UnlabelledEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
     removedLabel: Label!
+}
+
+input RemoveLabelInput {
+    clientMutationID: String
+    issue: ID!
+    label: ID!
+}
+
+type RemoveLabelPayload {
+    clientMutationID: String
+    label: Label
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type PinnedEvent implements IssueTimelineItem & Node {
@@ -362,11 +423,37 @@ type PinnedEvent implements IssueTimelineItem & Node {
     createdAt: Date!
 }
 
+input PinIssueInput {
+    clientMutationID: String
+    issue: ID!
+    component: ID!
+}
+
+type PinIssuePayload {
+    clientMutationID:
+    pinnedIssue: Issue
+    component: Component
+    timelineEdge: IssueTimeline
+}
+
 type UnpinnedEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
+}
+
+input UnpinIssueInput {
+    clientMutationID: String
+    issue: ID!
+    component: ID!
+}
+
+type UnpinIssuePayload {
+    clientMutationID:
+    unpinnedIssue: Issue
+    component: Component
+    timelineEdge: IssueTimeline
 }
 
 type RenamedTitleEvent implements IssueTimelineItem & Node {
@@ -376,6 +463,18 @@ type RenamedTitleEvent implements IssueTimelineItem & Node {
     createdAt: Date!
     oldTitle: String!
     newTitle: String!
+}
+
+input RenameTitleInput {
+    clientMutationID: String
+    issue: ID!
+    newTitle: String!
+}
+
+type RenameTitlePayload {
+    clientMutationID: String
+    issue: Issue
+    timelineEdge: IssueTimelineItemEdge
 }
 
 type CategoryChangedEvent implements IssueTimelineItem & Node {
