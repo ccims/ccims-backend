@@ -15,32 +15,30 @@ type Query {
     ): Node
 
     """
-    Requests issues in this instance of ccims
+    Requests projects in this instance of ccims
     """
-    issues(
+    projects(
         """
-        Returns all issues in the system that match the other inputs after the given one (inclusive)
+        Returns projects after the given edge
         """
         after: ID, 
         """
-        Returns all issues in the system that match the other inputs before the given one (exclusive)
+        Returns projects before the given edge
         """
         before: ID,
         """
-        Filters the issues to return by the specified criteria. A returned issue will match all of the given parameters
+        Only projects matching this filter will be returned
         """
-        filterBy: IssueFilter, 
+        filterBy: ProjectFilter, 
         """
-        If given, the first _n_ issues found in the system (matching the other given parameters) will be returned. 
-        If this is given, `last` can't be given or an error will be returned
+        Only return the first _n_ projects in the system
         """
         first: Int, 
         """
-        If given, the last _n_ issues found in the system (matching the other given parameters) will be returned.
-        If this is given, `first` can't be given or an error will be returned
+        Only return the last _n_ projects in the system
         """
         last: Int
-    ): IssuePage
+    ): ProjectPage
 
 }
 
@@ -150,6 +148,54 @@ type ProjectEdge {
     cursor: String!
 }
 
+"""
+Data input for creating a new project
+"""
+input CreateProjectInput {
+    """
+    The display name for the project
+    """
+    name: String!
+    """
+    The ids of all components initially part of this project
+    """
+    components: [ID!]
+    """
+    Th ids of all users which are part of this project. If not given, the owner user will be added automatically
+    """
+    users: [ID!]
+    """
+    The id of the owner user
+    """
+    owner: ID!
+}
+
+"""
+Filter for a Project. All parameters given in this filter will be connected via _AND_
+"""
+input ProjectFilter {
+    """
+    The name of the project must match any of the given strings
+    """
+    name: [String!]
+    """
+    The project must have any of the components with the given ids
+    """
+    components: [ID!]
+    """
+    At least one of the users with the given ids must be part of the project
+    """
+    users: [ID!]
+    """
+    The Owner of the project must be a user with one of the given ids
+    """
+    owner: [ID!]
+    """
+    At least one of the issues given must be on a component assigned to the project
+    """
+    issues: [ID!]
+}
+
 
 #------------------------------Component------------------------------
 type Component implements Node {
@@ -251,9 +297,9 @@ input IssueFilter {
     """
     title: [String!]
     """
-    The issue must be on at least one of the components matched by this component filter
+    The issue must be on at least one of the components with the given ids
     """
-    components: ComponentFilter
+    components: [ID!]
     """
     The body text of this issue must match this given __RegEx__
     """
@@ -303,9 +349,9 @@ input IssueFilter {
     """
     category: [IssueCategory!]
     """
-    The issue must have at least one linked issue which matches any one of the issues matched by the given IssueFilter
+    The issue must have at least one of the issues with the given ids
     """
-    linkedIssues: IssueFilter
+    linkedIssues: [ID!]
     """
     The issue (body text) must have all the reactions in one of the lists given.
     """
