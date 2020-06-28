@@ -216,8 +216,24 @@ type IssueTimelineItemEdge {
     cursor: String
 }
 
+"""
+Filters for certain timeline events.
+
+__Please note:__ It's currently __not__ possible to filter for specific properties of an event. Might be added in future
+"""
 input IssueTimelineItemFilter {
-    createdBy: ID
+    """
+    Filters for the creator user of the timeline event. The id of the user must match any of the given ids
+    """
+    createdBy: [ID!]
+    """
+    The timeline event must have occurred __after__ the given date to match the filter
+    """
+    createdAfter: Date
+    """
+    The timeline event must have occurred __before__ the given date to match the filter
+    """
+    createdBefore: Date
 }
 
 #IssueComment
