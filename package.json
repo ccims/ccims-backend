@@ -1,0 +1,29 @@
+{
+  "name": "ccims-backend-api-mockup",
+  "version": "0.0.1",
+  "description": "A mockup for the API of the finished ccims backend",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc && node out/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ccims/ccims-backend-demo.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/ccims/ccims-backend-demo/issues"
+  },
+  "homepage": "https://github.com/ccims/ccims-backend-demo#readme",
+  "dependencies": {
+    "@types/express": "^4.17.7",
+    "@types/graphql": "^14.5.0",
+    "@types/node": "^14.0.22",
+    "express": "^4.17.1",
+    "graphql": "^15.3.0",
+    "graphql-tools": "^6.0.12",
+    "typescript": "^3.9.6"
+  }
+}
