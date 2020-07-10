@@ -1,4 +1,4 @@
-import { mockServer, IMocks } from "graphql-tools";
+import { mockServer, IMocks, IMockOptions, addMocksToSchema } from "graphql-tools";
 import * as graphql from "graphql";
 import { readFileSync } from "fs";
 import express from "express";
@@ -13,6 +13,7 @@ function randomColor(): string {
 }
 
 const schemaFile = readFileSync("schemas/schema.graphql").toString();
+const schema = graphql.buildSchema(schemaFile);
 
 const mockData: IMocks = {
     Int: () => 0,
@@ -23,18 +24,28 @@ const mockData: IMocks = {
     Date: () => new Date().toISOString(),
 }
 
-const apiMock = mockServer(schemaFile, mockData);
-const schema = graphql.buildSchema(schemaFile);
+const mockOptions: IMockOptions = {
+    mocks: mockData,
+    schema: schema,
+    preserveResolvers: true
+}
+
+const apiMock = addMocksToSchema(mockOptions);
+
+console.log(apiMock);
 
 
 const server = express();
 
 const graphqlOptions: Options = {
     graphiql: true,
-    schema: schema,
-    rootValue: mockServer
+    schema: apiMock
 };
 
 server.use("/api", graphqlHTTP(graphqlOptions));
 
 server.listen(8080);
+
+console.log("Started server on Port 8080");
+console.log("GraphiQL (API Explorer + Rendered Docs) available at: http://localhost:8080/api");
+console.log("API-Endpoint: http://[SERVER-IP]:8080/api")
