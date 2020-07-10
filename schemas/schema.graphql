@@ -312,7 +312,7 @@ input ComponentInterfaceFilter {
 
 
 #-----------------------------------Issue----------------------------------
-type Issue implements Comment {
+type Issue implements Comment & Node {
     id: ID!
     title: String!
     components(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
