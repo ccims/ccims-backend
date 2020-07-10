@@ -284,8 +284,30 @@ type ComponentInterfaceEdge {
     cursor: String
 }
 
+"""
+Filters for an instance of a component's interface
+"""
 type ComponentInterfaceFilter {
-
+    """
+    The name the component has to have
+    """
+    name: String
+    """
+    Filter for interfacs owned by the user with this id
+    """
+    owner: ID
+    """
+    A Regex which the description of the interface needs to match
+    """
+    description: String
+    """
+    Filter for The ID of the component the inerface is offered by
+    """
+    component: ID
+    """
+    If given, only interfaces which are consumed by at least one of the components with the given ids can match the filter
+    """
+    consumedBy: [ID!]
 }
 
 
