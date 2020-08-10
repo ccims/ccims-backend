@@ -20,7 +20,7 @@ const mockData: IMocks = {
     String: () => "A text",
     JSON: () => JSON.stringify({ this: "is", a: ["test"] }),
     Colour: randomColor,
-    TimeSpan: () => Math.random() * 31536000000,
+    TimeSpan: () => Math.floor(Math.random() * 31536000000),
     Date: () => new Date().toISOString(),
 }
 
