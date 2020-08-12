@@ -1,8 +1,6 @@
-import { mockServer, IMocks, IMockOptions, addMocksToSchema } from "graphql-tools";
 import * as graphql from "graphql";
 import { readFileSync } from "fs";
-import express from "express";
-import { graphqlHTTP, Options } from "express-graphql";
+import { ApolloServer } from "apollo-server";
 
 function randomColor(): string {
     var out = "#";
@@ -15,7 +13,7 @@ function randomColor(): string {
 const schemaFile = readFileSync("schemas/schema.graphql").toString();
 const schema = graphql.buildSchema(schemaFile);
 
-const mockData: IMocks = {
+const mocks = {
     Int: () => 0,
     String: () => "A text",
     JSON: () => JSON.stringify({ this: "is", a: ["test"] }),
@@ -24,28 +22,8 @@ const mockData: IMocks = {
     Date: () => new Date().toISOString(),
 }
 
-const mockOptions: IMockOptions = {
-    mocks: mockData,
-    schema: schema,
-    preserveResolvers: true
-}
-
-const apiMock = addMocksToSchema(mockOptions);
-
-console.log(apiMock);
-
-
-const server = express();
-
-const graphqlOptions: Options = {
-    graphiql: true,
-    schema: apiMock
-};
-
-server.use("/api", graphqlHTTP(graphqlOptions));
-
-server.listen(8080);
-
-console.log("Started server on Port 8080");
-console.log("GraphiQL (API Explorer + Rendered Docs) available at: http://localhost:8080/api");
-console.log("API-Endpoint: http://[SERVER-IP]:8080/api")
+const server = new ApolloServer({schema, mocks});
+//server.use("/api", graphqlHTTP(graphqlOptions));
+server.listen("8080").then(({ url }) => {
+    console.log(`🚀 Server ready at ${url}`);
+  });
