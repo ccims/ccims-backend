@@ -5,7 +5,15 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node out/index.js"
+    "start": "tsc && node out/index.js",
+    "startr": "react-scripts start",
+    "build": "react-scripts build",
+    "testr": "react-scripts test",
+    "eject": "react-scripts eject",
+    "flow": "flow",
+    "deploy": "gh-pages -d build",
+    "predeploy": "yarn build",
+    "prettier": "prettier --write \"src/**/*.js\" \"docs/**/*.md\" README.md"
   },
   "repository": {
     "type": "git",
@@ -21,10 +29,23 @@
     "@types/graphql": "^14.5.0",
     "@types/node": "^14.0.22",
     "apollo-server": "^2.16.1",
+    "graphiql": "^1.0.0-alpha.13",
+    "graphiql-explorer": "^0.6.2",
     "graphql": "^15.3.0",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0",
+    "react-scripts": "2.1.3",
     "typescript": "^3.9.6"
   },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
   "devDependencies": {
-    "graphiql-explorer": "^0.6.2"
+    "graphiql-explorer": "^0.6.2",
+    "flow-bin": "^0.91.0",
+    "gh-pages": "^2.0.1"
   }
 }
