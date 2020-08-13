@@ -23,7 +23,6 @@ const mocks = {
 }
 
 const server = new ApolloServer({schema, mocks});
-//server.use("/api", graphqlHTTP(graphqlOptions));
 server.listen("8080").then(({ url }) => {
     console.log(`🚀 Server ready at ${url}`);
   });
