@@ -48,4 +48,4 @@ server.listen(8080);
 
 console.log("Started server on Port 8080");
 console.log("GraphiQL (API Explorer + Rendered Docs) available at: http://localhost:8080/api");
-console.log("API-Endpoint: http://[SERVER-IP]:8080/api")
+console.log("API-Endpoint: http://[SERVER-IP]:8080/api");
