@@ -3,6 +3,8 @@ import { readFileSync } from "fs";
 import express from "express";
 import { graphqlHTTP, Options } from "express-graphql";
 
+const cors = require('cors');
+
 function randomColor(): string {
     var out = "#";
     for (var i = 0; i < 3; i++) {
@@ -109,6 +111,7 @@ const graphqlOptions: Options = {
     schema: apiMock
 };
 
+server.use(cors());
 server.use("/api", graphqlHTTP(graphqlOptions));
 
 server.listen(8080);
