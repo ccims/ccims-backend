@@ -40,6 +40,19 @@ type Query {
         last: Int
     ): ProjectPage
 
+    """
+    Return the graph for the project and user. Graphs might differ from user to user for a given project (e.g. layout).
+    The user could be authenticated by a JWT token in the request.
+    The state of the graph is an array of GraphComponents a newly defined type.
+    """
+    graph(
+        project: ID,
+        user: ID,
+        """
+        GraphFilter is not yet defined. Maybe we can talk about it soon
+        """
+        filterBy: GraphFilter
+    ): [GraphComponent]
 }
 
 type Mutation {
@@ -234,6 +247,63 @@ input ProjectFilter {
 
 
 #------------------------------Component------------------------------
+
+type Graph implements Node {
+    id: ID!
+    user: User
+    components: GraphComponent
+}
+
+type GraphComponent implements Node {
+    """
+    We need all components and interfaces of the graph at once so pagination is unnecessary.
+    Leaving it out makes processing easier (in my limited graphql understanding). 
+    The goal is to get all data for initial graph render in one request to avoid unnecessary RTT.
+    If the user clicks a component/interface the client will request further data.
+    """
+    id: ID!
+    name: String
+    description: String
+    """
+    crossComponentIssues should only include issues related to other issues because we need them for drawing the dashed edges in graph.
+    Other issues are loaded on demand when the user clicks a component.
+    """
+    crossComponentIssues: [Issues]
+    """
+    A number representing how many issues of each type e.g. [1 0 3] stands for 1 bug, 0 feature req, 3 undecided
+    """
+    issueCounts: [IssueTypeCount]
+    interfaces: [GraphInterface]
+    componentRelations: [ComponentRelation]
+    
+}
+
+type GraphInterface {
+    id: ID!
+    name: String
+    issueCounts: [IssueTypeCount]
+}
+
+type IssueTypeCount {
+    issueType: IssueType
+    count: Int
+}
+
+enum IssueType{
+    UNCLASSIFIED
+    BUG
+    UNDECIDED
+}
+
+
+type ComponentRelation {
+    targetId: ID!
+    targetType: TargetType!
+}
+
+union TargetType = Interface | Component
+
+
 type Component implements Node {
     id: ID!
     name: String!
