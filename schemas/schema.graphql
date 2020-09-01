@@ -64,6 +64,8 @@ type Mutation {
     changeIssueEstimatedTime(input: ChangeIssueEstimatedTimeInput!): ChangeIssueEstimatedTimePayload
     addIssueToLocation(input: AddIssueToLocationInput!): AddIssueToLocationPayload
     removeIssueFromLocation(input: RemoveIssueFromLocationInput!): RemoveIssueFromLocationPayload
+    addIssueToComponent(input: AddIssueToComponentInput!): AddIssueToComponentPayload
+    removeIssueFromComponent(input: RemoveIssueFromComponentInput!): RemoveIssueFromComponentPayload
     markIssueAsDuplicate(input: MarkIssueAsDuplicateInput!): MarkIssueAsDuplicatePayload
     unmarkIssueAsDuplicate(input: UnmarkIssueAsDuplicateInput!): UnmarkIssueAsDuplicatePayload
     addReaction(input: AddReactionInput!): AddReactionPayload
@@ -234,12 +236,13 @@ input ProjectFilter {
 
 
 #------------------------------Component------------------------------
-type Component implements Node {
+type Component implements Node & IssueLocation {
     id: ID!
     name: String!
     owner: User
     description: String
     issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+    issuesOnLocation(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int): ProjectPage
     interfaces(after: String, before: String, filterBy: ComponentInterfaceFilter, first: Int, last: Int): ComponentInterfacePage
     consumedInterfaces(after: String, before: String, filterBy: ComponentInterfaceFilter, first: Int, last: Int): ComponentInterfacePage
@@ -263,12 +266,13 @@ input ComponentFilter {
     name: String
 }
 
-type ComponentInterface implements Node {
+type ComponentInterface implements Node & IssueLocation {
     id: ID!
     name: String!
     owner: User!
     description: String
     component: Component!
+    issuesOnLocation(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
     consumedBy(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
 }
 
@@ -319,9 +323,15 @@ type Issue implements Comment & Node {
     body: String
     bodyRendered: String
     createdBy: User
-    editedBy: User
+    editedBy: [User]
     createdAt: Date!
-    editedAt: Date
+    """
+    Date when the core issue (title, body etc.) was last changed (comments and other events DO NOT count)
+    """
+    lastEditedAt: Date
+    """
+    Date when any update/activity was made to any part of the issue (including title, commens, reactions)
+    """
     updatedAt: Date
     isOpen: Boolean!
     isDuplicate: Boolean!
@@ -437,7 +447,11 @@ input IssueFilter {
     """
     category: [IssueCategory!]
     """
-    The issue must have at least one of the issues with the given ids
+    If given, filters for issues which do/don't link other issues
+    """
+    linksIssues: Boolean
+    """
+    The issue must link at least one of the issues with the given ids
     """
     linkedIssues: [ID!]
     """
@@ -505,7 +519,8 @@ input IssueFilter {
 
 #------------------------------------------Issue timeline items---------------------------------------
 
-interface IssueTimelineItem {
+interface IssueTimelineItem implements Node {
+    id: ID!
     issue: Issue!
     createdBy: User
     createdAt: Date!
@@ -547,9 +562,9 @@ input IssueTimelineItemFilter {
 interface Comment {
     id: ID!
     createdBy: User
-    editedBy: User
+    editedBy: [User]
     createdAt: Date!
-    editedAt: Date
+    lastEditedAt: Date
     body: String
     bodyRendered: String
     reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
@@ -580,7 +595,8 @@ type IssueComment implements IssueTimelineItem & Comment & Node {
     id: ID!
     issue: Issue!
     createdBy: User
-    editedBy: User
+    editedBy: [User]
+    lastEditedAt: Date
     createdAt: Date!
     editedAt: Date
     body: String
@@ -875,8 +891,8 @@ type CategoryChangedEvent implements IssueTimelineItem & Node {
     issue: Issue!
     createdBy: User
     createdAt: Date!
-    oldType: IssueCategory!
-    newType: IssueCategory!
+    oldCategory: IssueCategory!
+    newCategory: IssueCategory!
 }
 
 input ChangeIssueCategoryInput {
@@ -1063,7 +1079,7 @@ type ChangeIssueEstimatedTimePayload {
     timelineEdge: IssueTimelineItemEdge
 }
 
-type AddedLocationEvent implements IssueTimelineItem & Node {
+type AddedToLocationEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -1081,12 +1097,12 @@ type AddIssueToLocationPayload {
     clientMutationID: String
     issue: Issue
     addedLocation: IssueLocation
-    event: AddedLocationEvent
+    event: AddedToLocationEvent
     locationEdge: IssueLocationEdge
     timelineEdge: IssueTimelineItemEdge
 }
 
-type RemovedLocationEvent implements IssueTimelineItem & Node {
+type RemovedFromLocationEvent implements IssueTimelineItem & Node {
     id: ID!
     issue: Issue!
     createdBy: User
@@ -1104,7 +1120,52 @@ type RemoveIssueFromLocationPayload {
     clientMutationID: String
     issue: Issue
     removedLocation: IssueLocation
-    event: AddedLocationEvent
+    event: RemovedFromLocationEvent
+    timelineEdge: IssueTimelineItemEdge
+}
+
+type AddedToComponentEvent implements IssueTimelineItem & Node {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    component: Component!
+}
+
+input AddIssueToComponentInput {
+    clientMutationID: String
+    issue: ID!
+    componentToAdd: ID!
+}
+
+type AddIssueToComponentPayload {
+    clientMutationID: String
+    issue: Issue
+    addedComponent: Component
+    event: AddedToComponentEvent
+    componentEdge: ComponentEdge
+    timelineEdge: IssueTimelineItemEdge
+}
+
+type RemovedFromComponentEvent implements IssueTimelineItem & Node {
+    id: ID!
+    issue: Issue!
+    createdBy: User
+    createdAt: Date!
+    removedComponent: Component!
+}
+
+input RemoveIssueFromComponentInput {
+    clientMutationID: String
+    issue: ID!
+    componentToRemove: ID!
+}
+
+type RemoveIssueFromComponentPayload {
+    clientMutationID: String
+    issue: Issue
+    removedComponent: Component
+    event: RemovedFromComponentEvent
     timelineEdge: IssueTimelineItemEdge
 }
 
@@ -1150,8 +1211,8 @@ type UnmarkIssueAsDuplicatePayload {
 }
 
 
-
-type ReactionGroup {
+type ReactionGroup implements Node {
+    id: ID!
     users: [User]
     reaction: String!
 }
@@ -1448,7 +1509,10 @@ Example: `{"numbers"`: [1,2,3,4]}`
 scalar JSON
 
 #--------------------------------Union types-------------------------------------------------
-union IssueLocation = Component | ComponentInterface
+interface IssueLocation implements Node {
+    id: ID!
+    issuesOnLocation(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
+}
 
 type IssueLocationPage {
     nodes: [IssueLocation]
