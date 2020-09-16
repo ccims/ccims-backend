@@ -1,1429 +1,190 @@
-#The root API types
-
-"""
-All queries
-"""
-type Query {
-    """
-    Requests an object (node) using the given ID. If the given ID is invalid an error will be returned
-    """
-    node (
-        """
-        The ID of the node to return. This can't be empty or null
-        """
-        id: ID!
-    ): Node
-
-    """
-    Requests projects in this instance of ccims
-    """
-    projects(
-        """
-        Returns projects after the given edge
-        """
-        after: String, 
-        """
-        Returns projects before the given edge
-        """
-        before: String,
-        """
-        Only projects matching this filter will be returned
-        """
-        filterBy: ProjectFilter, 
-        """
-        Only return the first _n_ projects in the system
-        """
-        first: Int, 
-        """
-        Only return the last _n_ projects in the system
-        """
-        last: Int
-    ): ProjectPage
-
-}
-
-type Mutation {
-    createIssue(input: CreateIssueInput!): CreateIssuePayload
-    addIssueComment(input: AddIssueCommentInput!): AddIssueCommentPayload
-    deleteIssueComment(input: DeleteIssueCommentInput!): DeleteIssueCommentPayload
-    linkIssue(input: LinkIssueInput!): LinkIssuePayload
-    unlinkIssue(input: UnlinkIssueInput!): UnlinkIssuePayload
-    addLabel(input: AddLabelInput!): AddLabelPayload
-    removeLabel(input: RemoveLabelInput!): RemoveLabelPayload
-    pinIssue(input: PinIssueInput!): PinIssuePayload
-    unpinIssue(input: UnpinIssueInput!): UnpinIssuePayload
-    renameIssueTitle(input: RenameIssueTitleInput!): RenameIssueTitlePayload
-    changeIssueCategory(input: ChangeIssueCategoryInput!): ChangeIssueCategoryPayload
-    addAssignee(input: AddAssigneeInput!): AddAssigneePayload
-    removeAssignee(input: RemoveAssigneeInput!): RemoveAssigneePayload
-    closeIssue(input: CloseIssueInput!): CloseIssuePayload
-    reopenIssue(input: ReopenIssueInput!): ReopenIssuePayload
-    changeIssuePriority(input: ChangeIssuePriorityInput!): ChangeIssuePriorityPayload
-    changeIssueStartDate(input: ChangeIssueStartDateInput!): ChangeIssueStartDatePayload
-    changeIssueDueDate(input: ChangeIssueDueDateInput!): ChangeIssueDueDatePayload
-    changeIssueEstimatedTime(input: ChangeIssueEstimatedTimeInput!): ChangeIssueEstimatedTimePayload
-    addIssueToLocation(input: AddIssueToLocationInput!): AddIssueToLocationPayload
-    removeIssueFromLocation(input: RemoveIssueFromLocationInput!): RemoveIssueFromLocationPayload
-    markIssueAsDuplicate(input: MarkIssueAsDuplicateInput!): MarkIssueAsDuplicatePayload
-    unmarkIssueAsDuplicate(input: UnmarkIssueAsDuplicateInput!): UnmarkIssueAsDuplicatePayload
-    addReaction(input: AddReactionInput!): AddReactionPayload
-    removeReaction(input: RemoveReactionInput!): RemoveReactionPayload
-}
-
-#----------Basic types---------------
-"""
-An object which can be identified by an ID - called a node
-"""
-interface Node {
-    """
-    The ID of this node. Every node will have an non-empty and non-null edge.
-
-    If this is ever empty or null, something went wrong.
-    """
-    id: ID!
-}
-
-"""
-A page (sometimes also called connection) of multiple elements. 
-
-A page has a content (the list of elements) of some type (depending on the type of page).
-It also has information about the page as well as a count of total elements of that type (not only the ones on this page)
-"""
-interface Page {
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type PageInfo {
-    startCursor: String
-    endCursor: String
-    endID: String
-    hasNextPage: Boolean!
-    hasPreviousPage: Boolean!
-}
-
-
-#----------------------------------User---------------------------------
-type User implements Node {
-    id: ID!
-    username: String!
-    displayName: String
-    email: String!
-    projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int): ProjectPage
-    assignedToIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    participantOfIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    issueComments(after: String, before: String, filterBy: IssueCommentFilter, first: Int, last: Int): IssueCommentPage
-}
-
-type UserPage implements Page {
-    nodes: [User]
-    edges: [UserEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type UserEdge {
-    node: User
-    cursor: String!
-}
-
-"""
-Filter for a user of the system. All parameters given in this filter will be connected via _AND_
-"""
-input UserFilter {
-    """
-    Any of the strings must match the users username
-    """
-    username: [String!]
-    """
-    The users username must match this given __RegEx__
-    """
-    displayName: String
-    """
-    The mail address of the user must match any of the ones given
-    """
-    email: [String!]
-    """
-    The user must be member of at least one of the projects with the given ids
-    """
-    projects: [ID!]
-    """
-    The user must be assigned to at least one of the issues with the given ids
-    """
-    assignedToIssues: [ID!]
-    """
-    The user must be participant of at least one of the issues with the given ids
-    """
-    participantOfIssues: [ID!]
-    """
-    The user must have written at least one of the comments with the given ids
-    """
-    issueComments: [ID!]
-}
-
-#-----------------------------Project--------------------------
-
-type Project implements Node {
-    id: ID!
-    name: String!
-    components(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
-    users(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
-    owner: User!
-    issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-}
-
-type ProjectPage implements Page {
-    nodes: [Project]
-    edges: [ProjectEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type ProjectEdge {
-    node: Project
-    cursor: String!
-}
-
-"""
-Data input for creating a new project
-"""
-input CreateProjectInput {
-    """
-    The display name for the project
-    """
-    name: String!
-    """
-    The ids of all components initially part of this project
-    """
-    components: [ID!]
-    """
-    The ids of all users which are part of this project. If not given, the owner user will be added automatically
-    """
-    users: [ID!]
-    """
-    The id of the owner user
-    """
-    owner: ID!
-}
-
-"""
-Filter for a Project. All parameters given in this filter will be connected via _AND_
-"""
-input ProjectFilter {
-    """
-    The name of the project must match any of the given strings
-    """
-    name: [String!]
-    """
-    The project must have any of the components with the given ids
-    """
-    components: [ID!]
-    """
-    At least one of the users with the given ids must be part of the project
-    """
-    users: [ID!]
-    """
-    The Owner of the project must be a user with one of the given ids
-    """
-    owner: [ID!]
-    """
-    At least one of the issues given must be on a component assigned to the project
-    """
-    issues: [ID!]
-}
-
-
-#------------------------------Component------------------------------
-type Component implements Node {
-    id: ID!
-    name: String!
-    owner: User
-    description: String
-    issues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    projects(after: String, before: String, filterBy: ProjectFilter, first: Int, last: Int): ProjectPage
-    interfaces(after: String, before: String, filterBy: ComponentInterfaceFilter, first: Int, last: Int): ComponentInterfacePage
-    consumedInterfaces(after: String, before: String, filterBy: ComponentInterfaceFilter, first: Int, last: Int): ComponentInterfacePage
-    imsType: IMSType!
-    imsData: JSON!
-}
-
-type ComponentPage implements Page {
-    nodes: [Component]
-    edges: [ComponentEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type ComponentEdge {
-    node: Component
-    cursor: String
-}
-
-input ComponentFilter {
-    name: String
-}
-
-type ComponentInterface implements Node {
-    id: ID!
-    name: String!
-    owner: User!
-    description: String
-    component: Component!
-    consumedBy(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
-}
-
-type ComponentInterfacePage {
-    nodes: [ComponentInterface]
-    edges: [ComponentInterfaceEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type ComponentInterfaceEdge {
-    node: ComponentInterface
-    cursor: String
-}
-
-"""
-Filters for an instance of a component's interface
-"""
-input ComponentInterfaceFilter {
-    """
-    The name the component has to have
-    """
-    name: String
-    """
-    Filter for interfacs owned by the user with this id
-    """
-    owner: ID
-    """
-    A Regex which the description of the interface needs to match
-    """
-    description: String
-    """
-    Filter for The ID of the component the inerface is offered by
-    """
-    component: ID
-    """
-    If given, only interfaces which are consumed by at least one of the components with the given ids can match the filter
-    """
-    consumedBy: [ID!]
-}
-
-
-#-----------------------------------Issue----------------------------------
-type Issue implements Comment & Node {
-    id: ID!
-    title: String!
-    components(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
-    body: String
-    bodyRendered: String
-    createdBy: User
-    editedBy: User
-    createdAt: Date!
-    editedAt: Date
-    updatedAt: Date
-    isOpen: Boolean!
-    isDuplicate: Boolean!
-    category: IssueCategory!
-    issueComments(after: String, before: String, filterBy: IssueCommentFilter, first: Int, last: Int): IssueCommentPage
-    linkedIssues(after: String, before: String, filterBy: IssueFilter, first: Int, last: Int): IssuePage
-    reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
-    assignees(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
-    labels(after: String, before: String, filterBy: LabelFilter, first: Int, last: Int): LabelPage
-    participants(after: String, before: String, filterBy: UserFilter, first: Int, last: Int): UserPage
-    pinnedOn(after: String, before: String, filterBy: ComponentFilter, first: Int, last: Int): ComponentPage
-    timeline(after: String, before: String, filterBy: IssueTimelineItemFilter, first: Int, last: Int): IssueTimelineItemPage
-    locations(after: String, before: String, filterBy: IssueLocationFilter, first: Int, last: Int): IssueLocationPage
-    currentUserCanEdit: Boolean!
-    currentUserCanComment: Boolean!
-    startDate: Date
-    dueDate: Date
-    estimatedTime: TimeSpan
-    spentTime: TimeSpan
-}
-
-input CreateIssueInput {
-    title: String!
-    body: String
-    componentIDs: [ID!]!
-    category: IssueCategory
-    labels: [ID!]
-    assignees: [ID!]
-    locations: [ID!]
-    startDate: Date
-    dueDate: Date
-    estimatedTime: TimeSpan
-    clientMutationID: String
-}
-
-type CreateIssuePayload {
-    clientMutationID: String
-    issue: Issue
-}
-
-type IssuePage implements Page {
-    nodes: [Issue]
-    edges: [IssueEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type IssueEdge {
-    node: Issue
-    cursor: String
-}
-
-"""
-Filters for Issues. All parameters given in this filter will be connected via _AND_
-
-Not specific issues in issue management systems but the issue in the ccims
-"""
-input IssueFilter {
-    """
-    The title of the issue must match any of the given strings
-    """
-    title: [String!]
-    """
-    The issue must be on at least one of the components with the given ids
-    """
-    components: [ID!]
-    """
-    The body text of this issue must match this given __RegEx__
-    """
-    body: String
-    """
-    The id of the user creating the issue must be any of the given ones
-    """
-    createdBy: [ID!]
-    """
-    The id of the user last editing the issue must match any of the ones in the list
-    """
-    editedBy: [ID!]
-    """
-    The issue must have been created __after__ the given date (inclusive)
-    """
-    createdAfter: Date
-    """
-    The issue must have been created __before__ the given date (inclusive)
-    """
-    createdBefore: Date
-    """
-    The issue must have been last edited __after__ the given date (inclusive)
-    """
-    editedAfter: Date
-    """
-    The issue must have been last edited __before__ the given date (inclusive)
-    """
-    editedBefore: Date
-    """
-    The last event in this issue must have occurred __after__ the given date (inclusive)
-    """
-    updatedAfter: Date
-    """
-    The last event in this issue must have occurred __before__ the given date (inclusive)
-    """
-    updatedBefore: Date
-    """
-    If given, filters for opened/closed issues
-    """
-    isOpen: Boolean
-    """
-    If given, filters for issues which are/aren't duplicates of another issue
-    """
-    isDuplicate: Boolean
-    """
-    The issue must have any of the given categories to match the filter
-    """
-    category: [IssueCategory!]
-    """
-    The issue must have at least one of the issues with the given ids
-    """
-    linkedIssues: [ID!]
-    """
-    The issue (body text) must have all the reactions in one of the lists given.
-    """
-    reactions: [[String!]!]
-    """
-    Any of the users with the given ids must be an assignee to the issue for it to match this filter
-    """
-    assignees: [ID!]
-    """
-    The issue must have all the labels of at least that are matched by at least one of the given label filters
-    """
-    labels: [LabelFilter!]
-    """
-    Any of the users with the given ids must be a participant to the issue for it to match this filter
-    """
-    participants: [ID!]
-    """
-    The issue must be assigned to at least one of the locations with the given ids
-    """
-    locations: [ID!]
-    """
-    If given filters for issues the current user is allowed/not allowed to edit (the title and body text)
-    """
-    currentUserCanEdit: Boolean
-    """
-    If given filters for issues the current user is allowed/not allowed to write new comments on
-    """
-    currentUserCanComment: Boolean
-    """
-    Filters for all issues that have a start date __after__ the give date
-    """
-    startDateAfter: Date
-    """
-    Filters for all issues that have a start date __before__ the give date
-    """
-    startDateBefore: Date
-    """
-    Filters for all issues that have a due date __after__ the give date
-    """
-    dueDateAfter: Date
-    """
-    Filters for all issues that have a due date __before__ the give date
-    """
-    dueDateBefore: Date
-    """
-    Matches all issues that have an estimated time __greater or equal__ than the given one
-    """
-    estimatedTimeGreaterThan: TimeSpan
-    """
-    Matches all issues that have an estimated time __lower or equal__ than the given one
-    """
-    estimatedTimeLowerThan: TimeSpan
-    """
-    Matches all issues that have an actual spent time __greater or equal__ than the given one
-    """
-    spentTimeGreaterThan: TimeSpan
-    """
-    Matches all issues that have an actual spent time __lower or equal__ than the given one
-    """
-    spentTimeLowerThan: TimeSpan
-}
-
-
-#------------------------------------------Issue timeline items---------------------------------------
-
-interface IssueTimelineItem {
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-}
-
-type IssueTimelineItemPage implements Page {
-    nodes: [IssueTimelineItem]
-    edges: [IssueTimelineItemEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type IssueTimelineItemEdge {
-    node: IssueTimelineItem
-    cursor: String
-}
-
-"""
-Filters for certain timeline events. All parameters given in this filter will be connected via _AND_
-
-__Please note:__ It's currently __not__ possible to filter for specific properties of an event. Might be added in future
-"""
-input IssueTimelineItemFilter {
-    """
-    Filters for the creator user of the timeline event. The id of the user must match any of the given ids
-    """
-    createdBy: [ID!]
-    """
-    The timeline event must have occurred __after__ the given date to match the filter
-    """
-    createdAfter: Date
-    """
-    The timeline event must have occurred __before__ the given date to match the filter
-    """
-    createdBefore: Date
-}
-
-#------------------------------------------IssueComment--------------------------------------------
-interface Comment {
-    id: ID!
-    createdBy: User
-    editedBy: User
-    createdAt: Date!
-    editedAt: Date
-    body: String
-    bodyRendered: String
-    reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
-    currentUserCanEdit: Boolean!
-}
-
-input AddReactionInput {
-    clientMutationID: String
-    reactionToAdd: String!
-}
-
-type AddReactionPayload {
-    clientMutationID: String
-    reaction: ReactionGroup
-    reactionEdge: ReactionGroupEdge
-}
-
-input RemoveReactionInput {
-    clientMutationID: String
-    reactionToRemove: String!
-}
-
-type RemoveReactionPayload {
-    clientMutationID: String
-}
-
-type IssueComment implements IssueTimelineItem & Comment & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    editedBy: User
-    createdAt: Date!
-    editedAt: Date
-    body: String
-    bodyRendered: String
-    reactions(after: String, before: String, filterBy: ReactionGroupFilter, first: Int, last: Int): ReactionGroupPage
-    currentUserCanEdit: Boolean!
-}
-
-input AddIssueCommentInput {
-    body: String!
-    clientMutationID: String
-    issueID: ID!
-}
-
-type AddIssueCommentPayload {
-    comment: IssueComment
-    clientMutationID: String
-    commentEdge: IssueCommentEdge
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type IssueCommentPage implements Page {
-    nodes: [IssueComment]
-    edges: [IssueCommentEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type IssueCommentEdge {
-    node: IssueComment
-    cursor: String
-}
-
-"""
-Filter for comments on issues (not including the issue bodies themselves). All parameters given in this filter will be connected via _AND_
-"""
-input IssueCommentFilter {
-    """
-    The id of the issue the comment belongs to must match any of the given ids
-    """
-    issue: [ID!]
-    """
-    The id of the user creating the comment. Must match any one of the given ids
-    """
-    createdBy: [ID!]
-    """
-    The id of the user who __last__ edited the comment must match any of the given ids
-    """
-    editedBy: [ID!]
-    """
-    Match all comments created after the given date (inclusive)
-    """
-    createdAfter: Date
-    """
-    Match all comments created before the given date (inclusive)
-    """
-    createdBefore: Date
-    """
-    Match all comments last edited after the given date (inclusive)
-    """
-    editedAfter: Date
-    """
-    Match all comments last edited before the given date (inclusive)
-    """
-    editedBefore: Date
-    """
-    The body of a comment must match this __RegEx__ to match the filter
-    """
-    body: String
-    """
-    A comment must have all the reactions in one of the lists given.
-    """
-    reactions: [[String!]!]
-    """
-    If given, filters for comments which the user either has or hasn't got edit permissions
-    """
-    currentUserCanEdit: Boolean
-}
-
-type DeletedIssueComment implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    deletedBy: User
-    deletedAt: Date
-}
-
-input DeleteIssueCommentInput {
-    clientMutationID: String
-    issueComment: ID
-}
-
-type DeleteIssueCommentPayload {
-    clientMutationID: String
-    deletedComment: DeletedIssueComment
-    timelineEdge: IssueTimelineItemEdge
-}
-
-#when mentioned in a commit or a pull request
-type ReferencedByOtherEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    component: Component
-    source: String
-    sourceURL: String
-}
-
-type ReferencedByIssueEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    mentionedAt: Issue
-    mentionedInComment: IssueComment
-}
-
-#when an user actively links another issue
-type LinkEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    linkedIssue: Issue
-}
-
-input LinkIssueInput {
-    clientMutationID: String,
-    issue: ID!
-    issueToLink: ID!
-}
-
-type LinkIssuePayload {
-    clientMutationID: String
-    linkedIssue: Issue
-    linkedIssueEdge: IssueEdge
-    timelineEdge: IssueTimelineItemEdge
-}
-
-# when an user unlinks another issue
-type UnlinkEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    removedLinkedIssue: Issue
-}
-
-input UnlinkIssueInput {
-    clientMutationID: String,
-    issue: ID!
-    issueToUnlink: ID!
-}
-
-type UnlinkIssuePayload {
-    clientMutationID: String
-    unlinkedIssue: Issue
-    timelineEdge: IssueTimelineItemEdge
-}
-
-#when another issue links this issue
-type WasLinkedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    linkedBy: Issue
-}
-
-#when another issue unlinks this issue
-type WasUnlinkedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    unlinkedBy: Issue
-}
-
-type LabelledEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    label: Label!
-}
-
-input AddLabelInput {
-    clientMutationID: String
-    issue: ID!
-    label: ID!
-}
-
-type AddLabelPayload {
-    clientMutationID: String
-    label: Label
-    issue: Issue
-    event: LabelledEvent
-    labelEdge: LabelEdge
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type UnlabelledEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    removedLabel: Label!
-}
-
-input RemoveLabelInput {
-    clientMutationID: String
-    issue: ID!
-    label: ID!
-}
-
-type RemoveLabelPayload {
-    clientMutationID: String
-    label: Label
-    issue: Issue
-    event: UnlabelledEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type PinnedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-}
-
-input PinIssueInput {
-    clientMutationID: String
-    issue: ID!
-    component: ID!
-}
-
-type PinIssuePayload {
-    clientMutationID: String
-    pinnedIssue: Issue
-    component: Component
-    event: PinnedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type UnpinnedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-}
-
-input UnpinIssueInput {
-    clientMutationID: String
-    issue: ID!
-    component: ID!
-}
-
-type UnpinIssuePayload {
-    clientMutationID: String
-    unpinnedIssue: Issue
-    component: Component
-    event: UnpinnedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type RenamedTitleEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    oldTitle: String!
-    newTitle: String!
-}
-
-input RenameIssueTitleInput {
-    clientMutationID: String
-    issue: ID!
-    newTitle: String!
-}
-
-type RenameIssueTitlePayload {
-    clientMutationID: String
-    issue: Issue
-    event: RenamedTitleEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type CategoryChangedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    oldType: IssueCategory!
-    newType: IssueCategory!
-}
-
-input ChangeIssueCategoryInput {
-    clientMutationID: String
-    issue: ID!
-    newCategory: IssueCategory!
-}
-
-type ChangeIssueCategoryPayload {
-    clientMutationID: String
-    issue: Issue
-    event: CategoryChangedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type AssignedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    assignee: User!
-}
-
-input AddAssigneeInput {
-    clientMutationID: String
-    issue: ID!
-    userToAssign: ID!
-}
-
-type  AddAssigneePayload {
-    clientMutationID: String
-    issue: Issue
-    assignee: User
-    event: AssignedEvent
-    assigneeEdge: UserEdge
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type UnassignedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    removedAssignee: User!
-}
-
-input RemoveAssigneeInput {
-    clientMutationID: String
-    issue: ID!
-    userToUnassign: ID!
-}
-
-type  RemoveAssigneePayload {
-    clientMutationID: String
-    issue: Issue
-    unassignedUser: User
-    event: UnassignedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type ClosedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-}
-
-input CloseIssueInput {
-    clientMutationID: String
-    issueToClose: ID!
-}
-
-type CloseIssuePayload {
-    clientMutationID: String
-    closedIssue: Issue
-    event: ClosedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type ReopenedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-}
-
-input ReopenIssueInput {
-    clientMutationID: String
-    issueToReopen: ID!
-}
-
-type ReopenIssuePayload {
-    clientMutationID: ID!
-    reopenedIssue: Issue
-    event: ReopenedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type PriorityChangedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    oldPriority: Priority
-    newPriority: Priority
-}
-
-input ChangeIssuePriorityInput {
-    clientMutationID: String
-    issue: ID!
-    newPriority: Priority!
-}
-
-type ChangeIssuePriorityPayload {
-    clientMutationID: String
-    issue: Issue
-    event: PriorityChangedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type StartDateChangedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    oldStartDate: Date
-    newStartDate: Date
-}
-
-input ChangeIssueStartDateInput {
-    clientMutationID: String
-    issue: ID!
-    newStartDate: Date!
-}
-
-type ChangeIssueStartDatePayload {
-    clientMutationID: String
-    issue: Issue
-    event: StartDateChangedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type DueDateChangedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    oldDueDate: Date
-    newDueDate: Date
-}
-
-input ChangeIssueDueDateInput {
-    clientMutationID: String
-    issue: ID!
-    newDueDate: Date!
-}
-
-type ChangeIssueDueDatePayload {
-    clientMutationID: String
-    issue: Issue
-    event: DueDateChangedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type EstimatedTimeChangedEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    oldEstimatedTime: TimeSpan
-    newEstimatedTime: TimeSpan
-}
-
-input ChangeIssueEstimatedTimeInput {
-    clientMutationID: String
-    issue: ID!
-    newEstimatedTime: TimeSpan!
-}
-
-type ChangeIssueEstimatedTimePayload {
-    clientMutationID: String
-    issue: Issue
-    event: EstimatedTimeChangedEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type AddedLocationEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    location: IssueLocation!
-}
-
-input AddIssueToLocationInput {
-    clientMutationID: String
-    issue: ID!
-    locationToAdd: ID!
-}
-
-type AddIssueToLocationPayload {
-    clientMutationID: String
-    issue: Issue
-    addedLocation: IssueLocation
-    event: AddedLocationEvent
-    locationEdge: IssueLocationEdge
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type RemovedLocationEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    removedLocation: IssueLocation!
-}
-
-input RemoveIssueFromLocationInput {
-    clientMutationID: String
-    issue: ID!
-    locationToRemove: ID!
-}
-
-type RemoveIssueFromLocationPayload {
-    clientMutationID: String
-    issue: Issue
-    removedLocation: IssueLocation
-    event: AddedLocationEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type MarkedAsDuplicateEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-    originalIssue: Issue
-}
-
-input MarkIssueAsDuplicateInput {
-    clientMutationID: String
-    issue: ID!
-    originalIssue: ID!
-}
-
-type MarkIssueAsDuplicatePayload {
-    clientMutationID: String
-    issue: Issue
-    originalIssue: Issue
-    event: MarkedAsDuplicateEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-type UnmarkedAsDuplicateEvent implements IssueTimelineItem & Node {
-    id: ID!
-    issue: Issue!
-    createdBy: User
-    createdAt: Date!
-}
-
-input UnmarkIssueAsDuplicateInput {
-    clientMutationID: String
-    issue: ID!
-}
-
-type UnmarkIssueAsDuplicatePayload {
-    clientMutationID: String
-    issue: Issue
-    event: MarkedAsDuplicateEvent
-    timelineEdge: IssueTimelineItemEdge
-}
-
-
-
-type ReactionGroup {
-    users: [User]
-    reaction: String!
-}
-
-type ReactionGroupPage {
-    nodes: [ReactionGroup]
-    edges: [ReactionGroupEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type ReactionGroupEdge {
-    node: ReactionGroup
-    cursor: String
-}
-
-"""
-A filter for reaction groups (a reaction together with the users who reacted). All parameters given in this filter will be connected via _AND_
-"""
-input ReactionGroupFilter {
-    """
-    The reactions name must match any one or more of the given strings
-    """
-    reaction: [String!]
-    """
-    A list of Users who reacted. Any reaction group which contains at least one of the given users will match the filter
-    """
-    users: [ID!]
-}
-
-type Label implements Node {
-    id: ID!
-    name: String!
-    description: String
-    colour: Colour
-}
-
-type LabelPage {
-    nodes: [Label]
-    edges: [LabelEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
-}
-
-type LabelEdge {
-    node: Label
-    cursor: String
-}
-
-"""
-A Filter data input for labels.  All parameters given in this filter will be connected via _AND_
-"""
-input LabelFilter {
-    """
-    A lists of names. The label needs to match any one or more of these.
-    """
-    name: [String!]
-    """
-    The __RegEx__ the description of the label needs to match
-    """
-    description: String
-
-    """
-    A list of label colours. Any one or more of the given colours need to match the labels colour.
-    """
-    colour: [Colour!]
-}
-
-#-------------------------------------Scalars and enums------------------------------------
-
 """
 The type of the Issue management system. Currently only GitHub and ccims internal are available
 """
 enum IMSType {
-    """
-    ccims itself is the only IMS for the component, there is no external IMS
-    """
-    CCIMS
-    """
-    GitHub (or GitHub enterprise server) is the IMS for the component
-    """
-    GITHUB
-}
+  """
+  The type of the Issue management system. Currently only GitHub and ccims internal are available
+  """
+  CCIMS
 
-"""
-The Priority which an issue has - how urgent it needs to be resolved
-"""
-enum Priority {
-
-    """
-    The issue has a low priority but higher than issues without priority
-    """
-    LOW,
-    """
-    The issue has a priority higher than low bot is not absolutely urgent
-    """
-    MEDIUM,
-    """
-    Issues with this priority are __very__ urgent and need to be resolved quickly
-    """
-    HIGH
+  """GitHub (or GitHub enterprise server) is the IMS for the component"""
+  GITHUB
 }
 
 """
 The category of an issue. The issue will be displayed accordingly in the ccims
 """
 enum IssueCategory {
+  """
+  If an issue is classified _bug_ it describes an error, flaw or fault in one ore multiple component(s) or interface(s)
+  """
+  BUG
 
-    """
-    If an issue is classified _bug_ it describes an error, flaw or fault in one ore multiple component(s) or interface(s)
-    """
-    BUG,
+  """
+  If an issue is defined a _feature request_, it describes a functionality that is to be implemented at some point
+  """
+  FEATURE_REQUEST
 
-    """
-    If an issue is defined a _feature request_, it describes a functionality that is to be implemented at some point
-    """
-    FEATURE_REQUEST,
-
-    """
-    The category for issues, that either weren't yet assigned to a category or that don't fit into one of the other categories
-    """
-    UNCLASSIFIED
+  """
+  The category for issues, that either weren't yet assigned to a category or that don't fit into one of the other categories
+  """
+  UNCLASSIFIED
 }
 
 """
 The type of a timeline item/event so it can be filtered for <sup>(because GraphQL doesn't allow to filter for a type)</sup>
 """
 enum IssueTimelineItemType {
-    """
-    A still visible comment on an issue (not including the actual issue text)
-    """
-    ISSUE_COMMENT,
+  """
+  A still visible comment on an issue (not including the actual issue text)
+  """
+  ISSUE_COMMENT
 
-    """
-    A comment that has been deleted by a user. This will contain no text etc., but a message should be shown in place of the comment stating that this is a deleted comment
-    """
-    DELETED_ISSUE_COMMENT,
+  """
+  A comment that has been deleted by a user. This will contain no text etc., but a message should be shown in place of the comment stating that this is a deleted comment
+  """
+  DELETED_ISSUE_COMMENT
 
-    """
-    An event when this issue was referenced by an element in an IMS that is not an issue (e.g. in a commit message, pull request etc.)
-    """
-    REFERENCED_BY_OTHER_EVENT,
+  """
+  An event when this issue was referenced by an element in an IMS that is not an issue (e.g. in a commit message, pull request etc.)
+  """
+  REFERENCED_BY_OTHER_EVENT
 
-    """
-    An event when this issue was referenced by an other issue in an IMS or the ccims itself
-    """
-    REFERENCED_BY_ISSUE_EVENT,
+  """
+  An event when this issue was referenced by an other issue in an IMS or the ccims itself
+  """
+  REFERENCED_BY_ISSUE_EVENT
 
-    """
-    A link from this issue to another issue was created
-    """
-    LINK_EVENT,
+  """A link from this issue to another issue was created"""
+  LINK_EVENT
 
-    """
-    A link from this issue to another issue was removed
-    """
-    UNLINK_EVENT,
+  """A link from this issue to another issue was removed"""
+  UNLINK_EVENT
 
-    """
-    An event if this issue was linked to in another issue
-    """
-    WAS_LINKED_EVENT,
+  """An event if this issue was linked to in another issue"""
+  WAS_LINKED_EVENT
 
-    """
-    An event if the link from another issue to this one was removed
-    """
-    WAS_UNLINKED_EVENT,
+  """An event if the link from another issue to this one was removed"""
+  WAS_UNLINKED_EVENT
 
+  """A label was added to this issue"""
+  LABELLED_EVENT
 
-    """
-    A label was added to this issue
-    """
-    LABELLED_EVENT,
+  """A label was removed from tis issue"""
+  UNLABELLED_EVENT
 
-    """
-    A label was removed from tis issue
-    """
-    UNLABELLED_EVENT,
+  """
+  This issue was pinned as important issue in the ccims.
+  
+  __This event won't be synced along all subscribed issue management systems__
+  """
+  PINNED_EVENT
 
-    """
-    This issue was pinned as important issue in the ccims.
-    __This event won't be synced along all subscribed issue management systems__
-    """
-    PINNED_EVENT,
+  """
+  This issue was unpinned in the ccims.
+  
+  __This event won't be synced along all subscribed issue management systems__
+  """
+  UNPINNED_EVENT
 
-    """
-    This issue was unpinned in the ccims.
-    __This event won't be synced along all subscribed issue management systems__
-    """
-    UNPINNED_EVENT,
+  """Occurs if the title of the issue has been changed"""
+  RENAMED_TITLE_EVENT
 
-    """
-    Occurs if the title of the issue has been changed
-    """
-    RENAMED_TITLE_EVENT,
+  """
+  An event if the category (see `enum IssueCategory`) of the issue has been changed
+  """
+  CATEGORY_CHANGED_EVENT
 
-    """
-    An event if the category (see `enum IssueCategory`) of the issue has been changed
-    """
-    CATEGORY_CHANGED_EVENT,
+  """If a user has been assigned as responsible person for this issue"""
+  ASSIGNED_EVENT
 
-    """
-    If a user has been assigned as responsible person for this issue
-    """
-    ASSIGNED_EVENT,
+  """
+  If a user has been unassigned from this issue and is no longer responsible
+  """
+  UNASSIGNED_EVENT
 
-    """
-    If a user has been unassigned from this issue and is no longer responsible
-    """
-    UNASSIGNED_EVENT,
+  """Happens if the issue has been closed by anybody"""
+  CLOSED_EVENT
 
-    """
-    Happens if the issue has been closed by anybody
-    """
-    CLOSED_EVENT,
+  """
+  Happens if the issue has been reopened after being closed by anybody.
+  
+  _This event doesn't occur on the first opening of the issue_
+  """
+  REOPENED_EVENT
 
-    """
-    Happens if the issue has been reopened after being closed by anybody.
+  """If the issue priority was changed (see `enum Priority`)"""
+  PRIORITY_CHANGED_EVENT
 
-    _This event doesn't occur on the first opening of the issue_
-    """
-    REOPENED_EVENT,
+  """An event if the date the issue gets relevant/starts has changed"""
+  START_DATE_CHANGED_EVENT
 
-    """
-    If the issue priority was changed (see `enum Priority`)
-    """
-    PRIORITY_CHANGED_EVENT,
+  """
+  An event if the date the issue is due on/must be finished by was changed
+  """
+  DUE_DATE_CHANGED_EVENT
 
-    """
-    An event if the date the issue gets relevant/starts has changed
-    """
-    START_DATE_CHANGED_EVENT,
+  """The estimated time required to resolve this issue was updated"""
+  ESTIMATED_TIME_CHANGED_EVENT
 
-    """
-    An event if the date the issue is due on/must be finished by was changed
-    """
-    DUE_DATE_CHANGED_EVENT,
+  """
+  Event if the cross component issue was added to another location (another component/another)
+  """
+  ADDED_LOCATION_EVENT
 
-    """
-    The estimated time required to resolve this issue was updated
-    """
-    ESTIMATED_TIME_CHANGED_EVENT,
+  """
+  Event if the cross component issue was removed from a location (another component/another)
+  """
+  REMOVED_LOCATION_EVENT
 
-    """
-    Event if the cross component issue was added to another location (another component/another)
-    """
-    ADDED_LOCATION_EVENT,
+  """
+  Occurs if this issue was marked as duplicate of some other issue which is known to the ccims.
+  
+  (if the issue in unknown to the ccims at time of marking it as a duplicate; it's not guaranteed, that the mark will be synced)
+  """
+  MARKED_AS_DUPLICATE_EVENT
 
-    """
-    Event if the cross component issue was removed from a location (another component/another)
-    """
-    REMOVED_LOCATION_EVENT,
-
-    """
-    Occurs if this issue was marked as duplicate of some other issue which is known to the ccims.
-    
-    (if the issue in unknown to the ccims at time of marking it as a duplicate; it's not guaranteed, that the mark will be synced)
-    """
-    MARKED_AS_DUPLICATE_EVENT,
-
-    """
-    An event if the issue is no longer a duplicate of another issue
-    """
-    UNMARKED_AS_DUPLICATE_EVENT,
+  """An event if the issue is no longer a duplicate of another issue"""
+  UNMARKED_AS_DUPLICATE_EVENT
 }
+
+"""The Priority which an issue has - how urgent it needs to be resolved"""
+enum Priority {
+  """The issue has a low priority but higher than issues without priority"""
+  LOW
+
+  """The issue has a priority higher than low bot is not absolutely urgent"""
+  MEDIUM
+
+  """
+  Issues with this priority are __very__ urgent and need to be resolved quickly
+  """
+  HIGH
+}
+
+"""
+A scalar type representing a colour in RGB colour space.
+The scalar must be a string in CSS Colour Hex format:
+
+`#rrggbb` where `rr`, `gg`, `bb` are the hex values between _0_ and _ff_
+
+Example: `#ffff00` (would be a _beautiful_ yellow)
+"""
+scalar Color
 
 """
 The `Date` scalar is a sting containing a date in a format compatible with _ISO-8601_
 
-Example: `"2011-10-10T14:48:00"`
+Example: `2011-10 - 10T14: 48: 00``
 """
 scalar Date
+
+"""
+The `JSON`scalar is a string in the a JSON format
+
+Example: `{"numbers": [1,2,3,4]}`
+"""
+scalar JSON
 
 """
 A integer number representing the length of the time span in milliseconds
@@ -1432,36 +193,3788 @@ Example: `60000` (equivalent to a time span of one minute)
 """
 scalar TimeSpan
 
-"""
-A scalar type representing a colour in RGB colour space.
-The scalar must be a string in CSS Colour Hex format: 
-`#rrggbb` where `rr`, `gg`, `bb` are the hex values between _0_ and _ff_
-
-Example: `#ffff00` (would be a _beautiful_ yellow)
-"""
-scalar Colour
-
-"""
-The `JSON`scalar is a string in the a JSON format
-Example: `{"numbers"`: [1,2,3,4]}`
-"""
-scalar JSON
-
-#--------------------------------Union types-------------------------------------------------
-union IssueLocation = Component | ComponentInterface
-
-type IssueLocationPage {
-    nodes: [IssueLocation]
-    edges: [IssueLocationEdge]
-    pageInfo: PageInfo!
-    totalCount: Int!
+"""An object which can be identified by an ID - called a node"""
+interface Node {
+  """
+  The ID of this node. Every node will have an non-empty and non-null edge.
+  
+  If this is ever empty or null, something went wrong.
+  """
+  id: ID
 }
 
+"""An edge for a ComponentInterfacePage to link a cursor to an element"""
+type ComponentInterfaceEdge {
+  """The interface linked to by this edge"""
+  node: ComponentInterface
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for a ComponentPage to link a cursor to an element"""
+type ComponentEdge {
+  """The component linked to by this edge"""
+  node: Component
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for an IssueCommentPage to link a cursor to an element"""
+type IssueCommentEdge {
+  """The issue comment linked to by this edge"""
+  node: IssueComment
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for an IssuePage to link a cursor to an element"""
+type IssueEdge {
+  """The issue linked to by this edge"""
+  node: Issue
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for an IssueLocationPage to link a cursor to an element"""
 type IssueLocationEdge {
-    node: IssueLocation
-    cursor: String
+  """The issue location linked to by this edge"""
+  node: IssueLocation
+
+  """The cursor for use in the pagination"""
+  cursor: String!
 }
 
+"""An edge for an IssueTimelineItemPage to link a cursor to an element"""
+type IssueTimelineItemEdge {
+  """The issue timeline item linked to by this edge"""
+  node: IssueTimelineItem
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for a LabelPage to link a cursor to an element"""
+type LabelEdge {
+  """The label linked to by this edge"""
+  node: Label
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for a ProjectPage to link a cursor to an element"""
+type ProjectEdge {
+  """The project linked to by this edge"""
+  node: Project
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for a RecationGroupPage to link a cursor to an element"""
+type ReactionGroupEdge {
+  """The reaction group linked to by this edge"""
+  node: ReactionGroup
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""An edge for a UserPage to link a cursor to an element"""
+type UserEdge {
+  """The user linked to by this edge"""
+  node: User
+
+  """The cursor for use in the pagination"""
+  cursor: String!
+}
+
+"""Filters for component matching the given properties"""
+input ComponentFilter {
+  """The name of the component must match any of the given strings"""
+  name: [String!]
+
+  """The owner of the component must have any of the given ids"""
+  owner: [ID!]
+
+  """The components description must match the given __RegEx__"""
+  description: String
+
+  """The IMS type of a component must be one of the given ones"""
+  imsType: [IMSType!]
+}
+
+"""Filters for an instance of a component's interface"""
+input ComponentInterfaceFilter {
+  """The name the component has to have"""
+  name: String
+
+  """Filter for interfacs owned by the user with this id"""
+  owner: ID
+
+  """A Regex which the description of the interface needs to match"""
+  description: String
+
+  """Filter for The ID of the component the inerface is offered by"""
+  component: ID
+
+  """
+  If given, only interfaces which are consumed by at least one of the components with the given ids can match the filter
+  """
+  consumedBy: [ID!]
+}
+
+"""
+Filter for comments on issues (not including the issue bodies themselves). All parameters given in this filter will be connected via _AND_
+"""
+input IssueCommentFilter {
+  """
+  The id of the issue the comment belongs to must match any of the given ids
+  """
+  issue: [ID!]
+
+  """
+  The id of the user creating the comment.Must match any one of the given ids
+  """
+  createdBy: [ID!]
+
+  """
+  The id of the user who __last__ edited the comment must match any of the given ids
+  """
+  editedBy: [ID!]
+
+  """Match all comments created after the given date (inclusive)"""
+  createdAfter: Date
+
+  """Match all comments created before the given date (inclusive)"""
+  createdBefore: Date
+
+  """Match all comments last edited after the given date (inclusive)"""
+  editedAfter: Date
+
+  """Match all comments last edited before the given date (inclusive)"""
+  editedBefore: Date
+
+  """The body of a comment must match this __RegEx__ to match the filter"""
+  body: String
+
+  """A comment must have all the reactions in one of the lists given."""
+  reactions: [[String!]!]
+
+  """
+  If given, filters for comments which the user either has or hasn't got edit permissions
+  """
+  currentUserCanEdit: Boolean
+}
+
+"""
+Filters for Issues. All parameters given in this filter will be connected via _AND_
+
+Not specific issues in issue management systems but the issue in the ccims
+"""
+input IssueFilter {
+  """The title of the issue must match any of the given strings"""
+  title: [String!]
+
+  """The issue must be on at least one of the components with the given ids"""
+  components: [ID!]
+
+  """The body text of this issue must match this given __RegEx__"""
+  body: String
+
+  """The id of the user creating the issue must be any of the given ones"""
+  createdBy: [ID!]
+
+  """
+  The id of the user last editing the issue must match any of the ones in the list
+  """
+  editedBy: [ID!]
+
+  """The issue must have been created __after__ the given date (inclusive)"""
+  createdAfter: Date
+
+  """The issue must have been created __before__ the given date (inclusive)"""
+  createdBefore: Date
+
+  """
+  The issue must have been last edited __after__ the given date (inclusive)
+  """
+  editedAfter: Date
+
+  """
+  The issue must have been last edited __before__ the given date (inclusive)
+  """
+  editedBefore: Date
+
+  """
+  The last event in this issue must have occurred __after__ the given date (inclusive)
+  """
+  updatedAfter: Date
+
+  """
+  The last event in this issue must have occurred __before__ the given date (inclusive)
+  """
+  updatedBefore: Date
+
+  """If given, filters for opened/closed issues"""
+  isOpen: Boolean
+
+  """
+  If given, filters for issues which are/aren't duplicates of another issue
+  """
+  isDuplicate: Boolean
+
+  """The issue must have any of the given categories to match the filter"""
+  category: [IssueCategory!]
+
+  """If given, filters for issues which do/don't link other issues"""
+  linksIssues: Boolean
+
+  """The issue must link at least one of the issues with the given ids"""
+  linkedIssues: [ID!]
+
+  """
+  The issue (body text) must have all the reactions in one of the lists given.
+  """
+  reactions: [[String!]!]
+
+  """
+  Any of the users with the given ids must be an assignee to the issue for it to match this filter
+  """
+  assignees: [ID!]
+
+  """
+  The issue must have all the labels of at least that are matched by at least one of the given label filters
+  """
+  labels: [LabelFilter!]
+
+  """
+  Any of the users with the given ids must be a participant to the issue for it to match this filter
+  """
+  participants: [ID!]
+
+  """
+  The issue must be assigned to at least one of the locations with the given ids
+  """
+  locations: [ID!]
+
+  """
+  If given filters for issues the current user is allowed/not allowed to edit (the title and body text)
+  """
+  currentUserCanEdit: Boolean
+
+  """
+  If given filters for issues the current user is allowed/not allowed to write new comments on
+  """
+  currentUserCanComment: Boolean
+
+  """Filters for all issues that have a start date __after__ the give date"""
+  startDateAfter: Date
+
+  """Filters for all issues that have a start date __before__ the give date"""
+  startDateBefore: Date
+
+  """Filters for all issues that have a due date __after__ the give date"""
+  dueDateAfter: Date
+
+  """Filters for all issues that have a due date __before__ the give date"""
+  dueDateBefore: Date
+
+  """
+  Matches all issues that have an estimated time __greater or equal__ than the given one
+  """
+  estimatedTimeGreaterThan: TimeSpan
+
+  """
+  Matches all issues that have an estimated time __lower or equal__ than the given one
+  """
+  estimatedTimeLowerThan: TimeSpan
+
+  """
+  Matches all issues that have an actual spent time __greater or equal__ than the given one
+  """
+  spentTimeGreaterThan: TimeSpan
+
+  """
+  Matches all issues that have an actual spent time __lower or equal__ than the given one
+  """
+  spentTimeLowerThan: TimeSpan
+}
+
+"""
+Filters for Issues locations (components and interfaces). All parameters given in this filter will be connected via _AND_
+"""
 input IssueLocationFilter {
-    name: String
+  """The name of the location must match one of the gien strings"""
+  name: [String!]
+
+  """The issue locations description must match the given __RegEx__"""
+  description: String
+}
+
+"""
+Filters for certain timeline events. All parameters given in this filter will be connected via _AND_
+
+__Please note:__ It's currently __not__ possible to filter for specific properties of an event. Might be added in future
+"""
+input IssueTimelineItemFilter {
+  """
+  Filters for the creator user of the timeline event. The id of the user must match any of the given ids
+  """
+  createdBy: [ID!]
+
+  """
+  The timeline event must have occurred after the given date (inclusive) to match the filter
+  """
+  createdAfter: Date
+
+  """
+  The timeline event must have occurred before the given date (inclusive) to match the filter
+  """
+  createdBefore: Date
+}
+
+"""
+A Filter data input for labels.  All parameters given in this filter will be connected via _AND_
+"""
+input LabelFilter {
+  """A lists of names. The label needs to match any one or more of these."""
+  name: [String!]
+
+  """The __RegEx__ the description of the label needs to match"""
+  description: String
+
+  """
+  A list of label colours. Any one or more of the given colours need to match the labels colour.
+  """
+  color: [Color!]
+}
+
+"""
+Filter for a Project. All parameters given in this filter will be connected via _AND_
+"""
+input ProjectFilter {
+  """The name of the project must match any of the given strings"""
+  name: [String!]
+
+  """The project must have any of the components with the given ids"""
+  components: [ID!]
+
+  """
+  At least one of the users with the given ids must be part of the project
+  """
+  users: [ID!]
+
+  """The Owner of the project must be a user with one of the given ids"""
+  owner: [ID!]
+
+  """
+  At least one of the issues given must be on a component assigned to the project
+  """
+  issues: [ID!]
+
+  """The projects description must match the given __RegEx__"""
+  description: String
+}
+
+"""
+A filter for reaction groups (a reaction together with the users who reacted). All parameters given in this filter will be connected via _AND_
+"""
+input ReactionGroupFilter {
+  """The reactions name must match any one or more of the given strings"""
+  reaction: [String!]
+
+  """
+  A list of Users who reacted. Any reaction group which contains at least one of the given users will match the filter
+  """
+  users: [ID!]
+}
+
+"""
+Filter for a user of the system. All parameters given in this filter will be connected via _AND_
+"""
+input UserFilter {
+  """Any of the strings must match the users username"""
+  username: [String!]
+
+  """The users username must match this given __RegEx__"""
+  displayName: String
+
+  """The mail address of the user must match any of the ones given"""
+  email: [String!]
+
+  """
+  The user must be member of at least one of the projects with the given ids
+  """
+  projects: [ID!]
+
+  """
+  The user must be assigned to at least one of the issues with the given ids
+  """
+  assignedToIssues: [ID!]
+
+  """
+  The user must be participant of at least one of the issues with the given ids
+  """
+  participantOfIssues: [ID!]
+
+  """
+  The user must have written at least one of the comments with the given ids
+  """
+  issueComments: [ID!]
+}
+
+"""A page of multiple component interfaces"""
+type ComponentInterfacePage implements Page {
+  """All interfaces on this page"""
+  nodes: [ComponentInterface]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [ComponentInterfaceEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of multiple components"""
+type ComponentPage implements Page {
+  """All components on this page"""
+  nodes: [Component]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [ComponentEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of multiple issue comments"""
+type IssueCommentPage implements Page {
+  """All issue comments on this page"""
+  nodes: [IssueComment]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [IssueCommentEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of multiple issue locations"""
+type IssueLocationPage implements Page {
+  """All issue locations on this page"""
+  nodes: [IssueLocation]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [IssueLocationEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of multiple issues"""
+type IssuePage implements Page {
+  """All issues on this page"""
+  nodes: [Issue]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [IssueEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of multiple labels"""
+type LabelPage implements Page {
+  """All labels on this page"""
+  nodes: [Label]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [LabelEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of multiple issue timeline items"""
+type IssueTimelineItemPage implements Page {
+  """All issue timeline items on this page"""
+  nodes: [IssueTimelineItem]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [IssueTimelineItemEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""
+A page of elements
+
+Contains edges and nodes as well as some information and a node count
+"""
+interface Page {
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""
+Information about a page including the first and last elements cursor and next/previous pages
+"""
+type PageInfo {
+  """
+  The cursor of the first element on the page. Can be used to request the previous page.
+  """
+  startCursor: String
+
+  """
+  The cursor of the last element on the page. Can be used to request the next page.
+  """
+  endCursor: String
+
+  """true iff there is another page of elements with the current filter"""
+  hasNextPage: Boolean!
+
+  """true iff there is a previous page of elements with the current filter"""
+  hasPreviousPage: Boolean!
+}
+
+"""A page of multiple users"""
+type UserPage implements Page {
+  """All users on this page"""
+  nodes: [User]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [UserEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of reaction groups"""
+type ReactionGroupPage implements Page {
+  """All reaction groups on this page"""
+  nodes: [ReactionGroup]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [ReactionGroupEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""A page of projects"""
+type ProjectPage implements Page {
+  """All projects on this page"""
+  nodes: [Project]
+
+  """Edges to all nodes containing the cursor"""
+  edges: [ProjectEdge]
+
+  """Information about the current page (like length, first/last element)"""
+  pageInfo: PageInfo!
+
+  """
+  The total number of elements matching the filter
+  
+  (Even ones that don't match the current page)
+  """
+  totalCount: Int!
+}
+
+"""An interface specifying an editable text block (e.g. Issue, Comment)"""
+interface Comment {
+  """The unique id of this comment"""
+  id: ID!
+
+  """
+  The body text of the comment.
+  Markdown supported.
+  
+  Max. 65536 characters
+  """
+  body: String
+
+  """The body text of the comment rendered to html"""
+  bodyRendered: String
+
+  """The user who originally created the comment (in ccims or any ims)"""
+  createdBy: User
+
+  """
+  A list of all people who edited the root of this comment (body and title)
+  """
+  editedBy: [User!]
+
+  """The date the comment was first created on"""
+  createdAt: Date!
+
+  """
+  Date when the core comment(title, body etc.) was last changed (comments and other events DO NOT count)
+  """
+  lastEditedAt: Date
+
+  """
+  `true` iff the user authenticated by the given JWT is permitted to edit this comment.
+  
+  This only refers to editing the core comment (title, body, etc.)
+  """
+  currentUserCanEdit: Boolean!
+
+  """
+  All reactions on this node, matching the given filter.
+  If no filter is given, all reactions will be returned
+  """
+  reactions(
+    """
+    Return only reactions AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only reactions BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only reactions matching this filter"""
+    filterBy: ReactionGroupFilter
+
+    """Return at most the first n reactions"""
+    first: Int
+
+    """Return at most the last n reactions"""
+    last: Int
+  ): ReactionGroupPage
+}
+
+"""
+A component known to ccims.
+
+A component can have issues and can be assigned to multiple projects. (NOTE: One IMS per component)
+"""
+type Component implements Node & IssueLocation {
+  """The unique id of this component"""
+  id: ID!
+
+  """
+  The (non unique) display name of this component
+  
+  Max. 256 characters
+  """
+  name: String!
+
+  """The user who administrates "owns" the component"""
+  owner: User
+
+  """
+  A textual description (of the fuction) of this component.
+  
+  Max. 65536 characters
+  """
+  description: String
+
+  """The IMS instance used by this component."""
+  ims: IMS
+
+  """
+  All issues on this node, matching the given filter.
+  These are all issues regardless on which components/interfaces they are located.
+  If no filter is given, all issues will be returned
+  """
+  issues(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """
+  Only returnes issues which are assigned to this __location__ matching the filter
+  
+  (for a component this won't return all issues of a component - Issues that are only on iterfaces won't be returned).
+  If no filter is given, all issues will be returned
+  """
+  issuesOnLocation(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """Requests projects within the given limits"""
+  projects(
+    """Returns projects after the given edge"""
+    after: String
+
+    """Returns projects before the given edge"""
+    before: String
+
+    """Only projects matching this filter will be returned"""
+    filterBy: ProjectFilter
+
+    """Only return the first _n_ projects in the system"""
+    first: Int
+
+    """Only return the last _n_ projects in the system"""
+    last: Int
+  ): ProjectPage
+
+  """Requests component interfaces which this component offers"""
+  interfaces(
+    """Returns interfaces after the given edge"""
+    after: String
+
+    """Returns interfaces before the given edge"""
+    before: String
+
+    """Only interfaces matching this filter will be returned"""
+    filterBy: ComponentInterfaceFilter
+
+    """Only return the first _n_ interfaces in the system"""
+    first: Int
+
+    """Only return the last _n_ interfaces in the system"""
+    last: Int
+  ): ComponentInterfacePage
+
+  """Requests component interfaces that are used/consumed by this component"""
+  consumedInterfaces(
+    """Returns interfaces after the given edge"""
+    after: String
+
+    """Returns interfaces before the given edge"""
+    before: String
+
+    """Only interfaces matching this filter will be returned"""
+    filterBy: ComponentInterfaceFilter
+
+    """Only return the first _n_ interfaces in the system"""
+    first: Int
+
+    """Only return the last _n_ interfaces in the system"""
+    last: Int
+  ): ComponentInterfacePage
+}
+
+"""
+An issue management system. This will be an __instance__ of one of the available IMS Types.
+
+E.g. One GitHub Repository's issue page.
+"""
+type IMS implements Node {
+  """The unique ID of this IMS"""
+  id: ID!
+
+  """The type/system this IMS is an instance of"""
+  imsType: IMSType
+
+  """The component this IMS belongs to"""
+  component: Component
+}
+
+"""
+An interface offered by a component which can be counsumed by other components
+"""
+type ComponentInterface implements Node & IssueLocation {
+  """The unique id of this component interface"""
+  id: ID!
+
+  """
+  The name of the component interface
+  
+  Max. 256 characters
+  """
+  name: String!
+
+  """
+  A textual description (of the fuction) of this component interface .
+  
+  Max. 65536 characters
+  """
+  description: String
+
+  """The parent component of this interface which offers it"""
+  component: Component!
+
+  """
+  Only returnes issues which are assigned to this __location__ matching the filter
+  
+  (for a component this won't return all issues of a component - Issues that are only on iterfaces won't be returned).
+  If no filter is given, all issues will be returned
+  """
+  issuesOnLocation(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """
+  Components which consume the interface and match the filter.
+  
+  If no filter is given, all components will be returned
+  """
+  consumedBy(
+    """
+    Return only components AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only components BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only components matching this filter"""
+    filterBy: ComponentFilter
+
+    """Return at most the first n components"""
+    first: Int
+
+    """Return at most the last n components"""
+    last: Int
+  ): ComponentPage
+}
+
+"""
+A cross component issue within ccims which links multiple issues from single ims
+"""
+type Issue implements Comment & Node {
+  """The unique id of this issue"""
+  id: ID!
+
+  """
+  The title to display for this issue.
+  
+  Not unique; Max. 256 characters
+  """
+  title: String!
+
+  """
+  The body text of the issue.
+  Markdown supported.
+  
+  Max. 65536 characters
+  """
+  body: String
+
+  """The body text of the issue rendered to html"""
+  bodyRendered: String
+
+  """The user who originally created the issue (in ccims or any ims)"""
+  createdBy: User
+
+  """
+  A list of all people who edited the root of this issue (body and title)
+  """
+  editedBy: [User!]
+
+  """The date the issue was first created on"""
+  createdAt: Date!
+
+  """
+  Date when the core issue(title, body etc.) was last changed (comments and other events DO NOT count)
+  """
+  lastEditedAt: Date
+
+  """
+  Date when any update / activity was made to any part of the issue (__including__ title, commens, reactions)
+  """
+  updatedAt: Date
+
+  """`true` iff the issue is open at this point"""
+  isOpen: Boolean!
+
+  """
+  Weather or not this issue has been marked as duplicate of another issue
+  """
+  isDuplicate: Boolean!
+
+  """
+  The ccims-issue-category the issue belongs to.
+  
+  This can be one of BUG,FEATURE_REQUEST or UNCLASSIFIED
+  """
+  category: IssueCategory!
+
+  """
+  `true` iff the user authenticated by the given JWT is permitted to edit this issue.
+  
+  This only refers to editing the core issue (title, body, etc.)
+  """
+  currentUserCanEdit: Boolean!
+
+  """
+  `true` iff the user authenticated by the given JWT is permitted to comment on this issue.
+  """
+  currentUserCanComment: Boolean!
+
+  """
+  A start date set for start of work on this issue.
+  
+  This is only for displaying and has no effect on the ccims but will be synce to other ims
+  """
+  startDate: Date
+
+  """
+  A due date set when work on the issue must be done.
+  
+  This is only for displaying and has no effect on the ccims but will be synce to other ims
+  """
+  dueDate: Date
+
+  """
+  The time estimated needed for work on this issue.
+  
+  This is only for displaying and has no effect on the ccims but will be synce to other ims
+  """
+  estimatedTime: TimeSpan
+
+  """
+  The time already spent on work on this issue.
+  
+  This is only for displaying and has no effect on the ccims but will be synce to other ims
+  """
+  spentTime: TimeSpan
+
+  """
+  All comments for this issue, matching the given filter.
+  If no filter is given, all comments will be returned
+  """
+  issueComments(
+    """
+    Return only comments AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only comments BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only comments matching this filter"""
+    filterBy: IssueCommentFilter
+
+    """Return at most the first n comments"""
+    first: Int
+
+    """Return at most the last n comments"""
+    last: Int
+  ): IssueCommentPage
+
+  """
+  All issues linked to or linking this issue, matching the given filter.
+  If no filter is given, all issues will be returned
+  """
+  linkedIssues(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """
+  All reactions on this node, matching the given filter.
+  If no filter is given, all reactions will be returned
+  """
+  reactions(
+    """
+    Return only reactions AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only reactions BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only reactions matching this filter"""
+    filterBy: ReactionGroupFilter
+
+    """Return at most the first n reactions"""
+    first: Int
+
+    """Return at most the last n reactions"""
+    last: Int
+  ): ReactionGroupPage
+
+  """
+  All users who are explicitely assigned to issue, matching the given filter.
+  If no filter is given, all issues will be returned
+  """
+  assignees(
+    """Return only users AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """Return only users BEFORE the one with the specified cursor (exclusive)"""
+    before: String
+
+    """Return only users matching this filter"""
+    filterBy: UserFilter
+
+    """Return at most the first n users"""
+    first: Int
+
+    """Return at most the last n users"""
+    last: Int
+  ): UserPage
+
+  """
+  All labels on this issue, matching the given filter.
+  If no filter is given, all labels will be returned
+  """
+  labels(
+    """Return only labels AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only labels BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only labels matching this filter"""
+    filterBy: LabelFilter
+
+    """Return at most the first n labels"""
+    first: Int
+
+    """Return at most the last n labels"""
+    last: Int
+  ): LabelPage
+
+  """
+  All users participating on this issue (by writing a comment, etc.), matching the given filter.
+  If no filter is given, all users will be returned
+  """
+  participants(
+    """Return only users AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """Return only users BEFORE the one with the specified cursor (exclusive)"""
+    before: String
+
+    """Return only users matching this filter"""
+    filterBy: UserFilter
+
+    """Return at most the first n users"""
+    first: Int
+
+    """Return at most the last n users"""
+    last: Int
+  ): UserPage
+
+  """
+  All components where this issue has been pinned, matching the given filter.
+  If no filter is given, all components will be returned
+  """
+  pinnedOn(
+    """
+    Return only components AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only components BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only components matching this filter"""
+    filterBy: ComponentFilter
+
+    """Return at most the first n components"""
+    first: Int
+
+    """Return at most the last n components"""
+    last: Int
+  ): ComponentPage
+
+  """
+  All timeline events for this issue in chonological order from oldest to newest, matching the given filter.
+  If no filter is given, all events will be returned
+  """
+  timeline(
+    """
+    Return only timeline events AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only timeline events BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only timeline events matching this filter"""
+    filterBy: IssueTimelineItemFilter
+
+    """Return at most the first n timeline events"""
+    first: Int
+
+    """Return at most the last n timeline events"""
+    last: Int
+  ): IssueTimelineItemPage
+
+  """
+  All locations this issue is assigned to, matching the given filter.
+  If no filter is given, all locations will be returned
+  """
+  locations(
+    """
+    Return only locations AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only locations BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only locations matching this filter"""
+    filterBy: IssueLocationFilter
+
+    """Return at most the first n locations"""
+    first: Int
+
+    """Return at most the last n locations"""
+    last: Int
+  ): IssueLocationPage
+}
+
+"""
+A location an issue can be assigned to
+
+Currently this can be either a component or an interface
+"""
+interface IssueLocation implements Node {
+  """The unique id of the node of this location"""
+  id: ID!
+
+  """
+  The name of the location
+  
+  Max. 256 characters
+  """
+  name: String!
+
+  """
+  A textual description (of the fuction) of this issue location.
+  
+  Max. 65536 characters
+  """
+  description: String
+
+  """
+  Only returnes issues which are assigned to this __location__ matching the filter
+  
+  (for a component this won't return all issues of a component - Issues that are only on iterfaces won't be returned).
+  If no filter is given, all issues will be returned
+  """
+  issuesOnLocation(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+}
+
+"""An event in the timeline of an issue with a date and a creator"""
+interface IssueTimelineItem implements Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+}
+
+"""A label assignable to issues. A label is per-project"""
+type Label implements Node {
+  """The unique id of this label"""
+  id: ID!
+
+  """
+  The name of the label to display.
+  
+   Max. 256 characters
+  """
+  name: String!
+
+  """
+  A text describing the labels' function
+  
+  Max. 65536 characters
+  """
+  description: String
+
+  """The color of the label in the GUI"""
+  color: Color
+
+  """Requests projects within the given limits"""
+  projects(
+    """Returns projects after the given edge"""
+    after: String
+
+    """Returns projects before the given edge"""
+    before: String
+
+    """Only projects matching this filter will be returned"""
+    filterBy: ProjectFilter
+
+    """Only return the first _n_ projects in the system"""
+    first: Int
+
+    """Only return the last _n_ projects in the system"""
+    last: Int
+  ): ProjectPage
+}
+
+"""
+A relation of users who have reacted with a certain reaction to something
+"""
+type ReactionGroup implements Node {
+  """The unique id of this reaction group"""
+  id: ID!
+
+  """
+  Users who reacted with this reaction.
+  
+  If there are only a few, all users will be returned. If too many users are part of this reaction group, only a few will be returned
+  """
+  users: [User]
+
+  """
+  The total number of users in this reaction group.
+  This is needed in case the `users` list was truncated.
+  """
+  totalUserCount: Int!
+
+  """
+  The name of the recation with which the people in this reaction group have reacted
+  """
+  reaction: String!
+}
+
+"""
+A project is a one unit in which the participating components colaborate
+"""
+type Project implements Node {
+  """The unique id of this project"""
+  id: ID!
+
+  """
+  The human readable name of this project
+  
+  Max. 256 characters
+  """
+  name: String!
+
+  """
+  Components which are part of this project and match the filter.
+  
+  If no filter is given, all components will be returned
+  """
+  components(
+    """
+    Return only components AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only components BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only components matching this filter"""
+    filterBy: ComponentFilter
+
+    """Return at most the first n components"""
+    first: Int
+
+    """Return at most the last n components"""
+    last: Int
+  ): ComponentPage
+
+  """
+  Users which are part of this project and match the given filter.
+  
+  If no filter is given, all users will be returned
+  """
+  users(
+    """Return only users AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """Return only users BEFORE the one with the specified cursor (exclusive)"""
+    before: String
+
+    """Return only users matching this filter"""
+    filterBy: UserFilter
+
+    """Return at most the first n users"""
+    first: Int
+
+    """Return at most the last n users"""
+    last: Int
+  ): UserPage
+
+  """The user who administrates "owns" the project"""
+  owner: User!
+
+  """
+  All issues on this node, matching the given filter.
+  These are all issues regardless on which components/interfaces they are located.
+  If no filter is given, all issues will be returned
+  """
+  issues(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """
+  All labels which are available on this project, matching the given filter.
+  If no filter is given, all labels will be returned
+  """
+  labels(
+    """Return only labels AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only labels BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only labels matching this filter"""
+    filterBy: LabelFilter
+
+    """Return at most the first n labels"""
+    first: Int
+
+    """Return at most the last n labels"""
+    last: Int
+  ): LabelPage
+
+  """
+  A textual description of this project.
+  
+  Max. 65536 characters
+  """
+  description: String
+}
+
+"""
+A user of th ccims. Can be assigned to projects, components and can have multiple ims accounts
+"""
+type User implements Node {
+  """The unique id of this user"""
+  id: ID!
+
+  """The unique username used for login"""
+  username: String!
+
+  """The name of the user to display in the GUI"""
+  displayName: String
+
+  """The mail address of the user"""
+  email: String!
+
+  """Requests projects within the given limits"""
+  projects(
+    """Returns projects after the given edge"""
+    after: String
+
+    """Returns projects before the given edge"""
+    before: String
+
+    """Only projects matching this filter will be returned"""
+    filterBy: ProjectFilter
+
+    """Only return the first _n_ projects in the system"""
+    first: Int
+
+    """Only return the last _n_ projects in the system"""
+    last: Int
+  ): ProjectPage
+
+  """Returns all issues this user is explicitly assigned to"""
+  assignedToIssues(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """
+  Returns all issues this user is a participant of (e.g. through contibuting, being assigned etc.)
+  """
+  participantOfIssues(
+    """Return only issues AFTER the one with the specified cursor (exclusive)"""
+    after: String
+
+    """
+    Return only issues BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only issues matching this filter"""
+    filterBy: IssueFilter
+
+    """Return at most the first n issues"""
+    first: Int
+
+    """Return at most the last n issues"""
+    last: Int
+  ): IssuePage
+
+  """
+  All comments written by this user, matching the given filter.
+  If no filter is given, all comments will be returned
+  """
+  issueComments(
+    """
+    Return only comments AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only comments BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only comments matching this filter"""
+    filterBy: IssueCommentFilter
+
+    """Return at most the first n comments"""
+    first: Int
+
+    """Return at most the last n comments"""
+    last: Int
+  ): IssueCommentPage
+}
+
+"""
+An AddedToComponentEvent in the timeline of an issue with a date and a creator
+"""
+type AddedToComponentEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The component the issue was added to"""
+  component: Component!
+}
+
+"""
+An AddedToLocationEvent in the timeline of an issue with a date and a creator
+"""
+type AddedToLocationEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The location the issue was added to"""
+  location: IssueLocation!
+}
+
+"""An ClosedEvent in the timeline of an issue with a date and a creator"""
+type ClosedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+}
+
+"""An AssignedEvent in the timeline of an issue with a date and a creator"""
+type AssignedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The user which was newly assigned to this issue"""
+  assignee: User!
+}
+
+"""
+An CategoryChangedEvent in the timeline of an issue with a date and a creator
+"""
+type CategoryChangedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The old category of the issue"""
+  oldCategory: IssueCategory!
+
+  """The new updated issue category"""
+  newCategory: IssueCategory!
+}
+
+"""
+An DueDateChangedEvent in the timeline of an issue with a date and a creator
+"""
+type DueDateChangedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The old due date"""
+  oldDueDate: Date
+
+  """The new due date for the issue"""
+  newDueDate: Date
+}
+
+"""
+An DeletedIssueComment in the timeline of an issue with a date and a creator
+"""
+type DeletedIssueComment implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """The user responsible who originally wrote the comment"""
+  createdBy: User
+
+  """
+  The date the original comment was first written. It's importand to user __this__ date for sorting to maintain the conversation order
+  """
+  createdAt: Date!
+
+  """The user who __deleted__ the comment"""
+  deletedBy: User
+
+  """The date the comment was deleted"""
+  deletedAt: Date
+}
+
+"""
+An EstimatedTimeChangedEvent in the timeline of an issue with a date and a creator
+"""
+type EstimatedTimeChangedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The old time estimate for the issue"""
+  oldEstimatedTime: TimeSpan
+
+  """The new updated time estimate for the issue"""
+  newEstimatedTime: TimeSpan
+}
+
+"""An LabelledEvent in the timeline of an issue with a date and a creator"""
+type LabelledEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The label which was added to the issue"""
+  label: Label!
+}
+
+"""A commemt on an issue. Not including th issue body itself"""
+type IssueComment implements IssueTimelineItem & Comment & Node {
+  """The unique id of this comment"""
+  id: ID!
+
+  """The issue this comment belongs to"""
+  issue: Issue!
+
+  """
+  The body text of the comment.
+  Markdown supported.
+  
+  Max. 65536 characters
+  """
+  body: String
+
+  """The body text of the comment rendered to html"""
+  bodyRendered: String
+
+  """The user who originally created the comment (in ccims or any ims)"""
+  createdBy: User
+
+  """
+  A list of all people who edited the root of this comment (body and title)
+  """
+  editedBy: [User!]
+
+  """The date the comment was first created on"""
+  createdAt: Date!
+
+  """
+  Date when the core comment(title, body etc.) was last changed (comments and other events DO NOT count)
+  """
+  lastEditedAt: Date
+
+  """
+  `true` iff the user authenticated by the given JWT is permitted to edit this comment.
+  
+  This only refers to editing the core comment (title, body, etc.)
+  """
+  currentUserCanEdit: Boolean!
+
+  """
+  All reactions on this node, matching the given filter.
+  If no filter is given, all reactions will be returned
+  """
+  reactions(
+    """
+    Return only reactions AFTER the one with the specified cursor (exclusive)
+    """
+    after: String
+
+    """
+    Return only reactions BEFORE the one with the specified cursor (exclusive)
+    """
+    before: String
+
+    """Return only reactions matching this filter"""
+    filterBy: ReactionGroupFilter
+
+    """Return at most the first n reactions"""
+    first: Int
+
+    """Return at most the last n reactions"""
+    last: Int
+  ): ReactionGroupPage
+}
+
+"""
+An MarkedAsDuplicateEvent in the timeline of an issue with a date and a creator
+"""
+type MarkedAsDuplicateEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The issue of which __this__ issue is a duplicate"""
+  originalIssue: Issue
+}
+
+"""An LinkEvent in the timeline of an issue with a date and a creator"""
+type LinkEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The issue that was linked __to__ (__from__ this issue)"""
+  linkedIssue: Issue
+}
+
+"""An PinnedEvent in the timeline of an issue with a date and a creator"""
+type PinnedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+}
+
+"""
+An ReferencedByIssueEvent in the timeline of an issue with a date and a creator
+
+This occurs if this issue is referenced by another known issue
+"""
+type ReferencedByIssueEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The issue by which this issue was referenced"""
+  mentionedAt: Issue
+
+  """The comment in which the reference to this issue was made"""
+  mentionedInComment: IssueComment
+}
+
+"""
+An PriorityChangedEvent in the timeline of an issue with a date and a creator
+"""
+type PriorityChangedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The old priority of the issue"""
+  oldPriority: Priority
+
+  """The new updated priority of the issue"""
+  newPriority: Priority
+}
+
+"""
+An RemovedFromComponentEvent in the timeline of an issue with a date and a creator
+"""
+type RemovedFromComponentEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The component the issue was removed from"""
+  removedComponent: Component!
+}
+
+"""
+An ReferencedByOtherEvent in the timeline of an issue with a date and a creator.
+
+This occures if this issue is referenced outside of an issue (e.g. pull request etc.)
+"""
+type ReferencedByOtherEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The component from which this issue was referenced"""
+  component: Component
+
+  """
+  A human readable name of the source of the reference (e.g. 'Pull request #2')
+  """
+  source: String
+
+  """An URL to where the issue was linked from"""
+  sourceURL: String
+}
+
+"""
+An RemovedFromLocationEvent in the timeline of an issue with a date and a creator
+"""
+type RemovedFromLocationEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The location the issue was removed from"""
+  removedLocation: IssueLocation!
+}
+
+"""An ReopenedEvent in the timeline of an issue with a date and a creator"""
+type ReopenedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+}
+
+"""
+An StartDateChangedEvent in the timeline of an issue with a date and a creator
+"""
+type StartDateChangedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The start date set for the issue before it was changed"""
+  oldStartDate: Date
+
+  """The new set start date for the issue"""
+  newStartDate: Date
+}
+
+"""
+An RenamedTitleEvent in the timeline of an issue with a date and a creator
+"""
+type RenamedTitleEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The title of the issue before the change"""
+  oldTitle: String!
+
+  """The new updated title of the issue"""
+  newTitle: String!
+}
+
+"""
+An UnassignedEvent in the timeline of an issue with a date and a creator
+"""
+type UnassignedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The user which was unassigned from this issue"""
+  removedAssignee: User!
+}
+
+"""
+An UnlabelledEvent in the timeline of an issue with a date and a creator
+"""
+type UnlabelledEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The label which was removed from the issue on this event"""
+  removedLabel: Label!
+}
+
+"""
+An WasLinkedEvent in the timeline of an issue with a date and a creator
+"""
+type WasLinkedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The issue which this issue is linked to after this event"""
+  linkedBy: Issue
+}
+
+"""
+An UnmarkedAsDuplicateEvent in the timeline of an issue with a date and a creator
+"""
+type UnmarkedAsDuplicateEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+}
+
+"""
+An WasUnlinkedEvent in the timeline of an issue with a date and a creator
+"""
+type WasUnlinkedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The issue which this issue was linked to before this event"""
+  unlinkedBy: Issue
+}
+
+"""An UnpinnedEvent in the timeline of an issue with a date and a creator"""
+type UnpinnedEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+}
+
+"""An UnlinkEvent in the timeline of an issue with a date and a creator"""
+type UnlinkEvent implements IssueTimelineItem & Node {
+  """The unique id of this timeline item"""
+  id: ID!
+
+  """The issue this timeline event belongs to"""
+  issue: Issue!
+
+  """
+  The user responsible for the creation of the event (e.g. autor of a comment)
+  
+  It's possible there is no autor, for example if the action was performed automatically
+  """
+  createdBy: User
+
+  """
+  The date the event occured on/was created.
+  
+  This ISN'T updated if the event is be changed
+  """
+  createdAt: Date!
+
+  """The issue this issue __linked to__ before this event"""
+  removedLinkedIssue: Issue
+}
+
+"""All queries for requesting stuff"""
+type Query {
+  """
+  Requests an object (node) using the given ID. If the given ID is invalid an error will be returned
+  """
+  node(
+    """The ID of the node to return. This can't be empty or null"""
+    id: ID!
+  ): Node
+
+  """Returns the string which is given as input"""
+  echo(
+    """The String to be returned"""
+    input: String
+  ): String
+
+  """Requests projects within the given limits"""
+  projects(
+    """Returns projects after the given edge"""
+    after: String
+
+    """Returns projects before the given edge"""
+    before: String
+
+    """Only projects matching this filter will be returned"""
+    filterBy: ProjectFilter
+
+    """Only return the first _n_ projects in the system"""
+    first: Int
+
+    """Only return the last _n_ projects in the system"""
+    last: Int
+  ): ProjectPage
+}
+
+"""Mutations to change the data within the ccims"""
+type Mutation {
+  """A mutation for testing if you're able to use GraphQL"""
+  testMutation(
+    """The data for the mutation"""
+    input: TestMutationInput
+  ): TestMutationPayload
+
+  """Creates a new Issue"""
+  createIssue(
+    """The data for the mutation"""
+    input: CreateIssueInput
+  ): CreateIssuePayload
+
+  """Creates a new comment on an existing issue"""
+  addIssueComment(
+    """The data for the mutation"""
+    input: AddIssueCommentInput
+  ): AddIssueCommentPayload
+
+  """
+  Deletes an issue comment.
+  
+  Comments don't get fully deleted but replaced by a
+  
+  `DeletedComment` (only contains creation/deletion date/user) which is for conversation completness
+  """
+  deleteIssueComment(
+    """The data for the mutation"""
+    input: DeleteIssueCommentInput
+  ): DeleteIssueCommentPayload
+
+  """Links an issue to another one, creating a relation"""
+  linkIssue(
+    """The data for the mutation"""
+    input: LinkIssueInput
+  ): LinkIssuePayload
+
+  """Unlink an issue from another and remove their relation"""
+  unlinkIssue(
+    """The data for the mutation"""
+    input: UnlinkIssueInput
+  ): UnlinkIssuePayload
+
+  """Adds a label to an issue"""
+  addLabelToIssue(
+    """The data for the mutation"""
+    input: AddLabelToIssueInput
+  ): AddLabelToIssuePayload
+
+  """Remove a label that is currently on the issue"""
+  removeLabelFromIssue(
+    """The data for the mutation"""
+    input: RemoveLabelFromIssueInput
+  ): RemoveLabelFromIssuePayload
+
+  """Pins an issue to a component (including in the IMS of the component)"""
+  pinIssue(
+    """The data for the mutation"""
+    input: PinIssueInput
+  ): PinIssuePayload
+
+  """Unpin an issue from a component"""
+  unpinIssue(
+    """The data for the mutation"""
+    input: UnpinIssueInput
+  ): UnpinIssuePayload
+
+  """Change the title (rename) an issue"""
+  renameIssueTitle(
+    """The data for the mutation"""
+    input: RenameIssueTitleInput
+  ): RenameIssueTitlePayload
+
+  """Changes the category of an issue"""
+  changeIssueCategory(
+    """The data for the mutation"""
+    input: ChangeIssueCategoryInput
+  ): ChangeIssueCategoryPayload
+
+  """Assignes a user to an issue"""
+  addAssignee(
+    """The data for the mutation"""
+    input: AddAssigneeInput
+  ): AddAssigneePayload
+
+  """Uassignes a user that is currently an assinee on an issue"""
+  removeAssignee(
+    """The data for the mutation"""
+    input: RemoveAssigneeInput
+  ): RemoveAssigneePayload
+
+  """Closes an open issue"""
+  closeIssue(
+    """The data for the mutation"""
+    input: CloseIssueInput
+  ): CloseIssuePayload
+
+  """Reopen an issue after it has been closed"""
+  reopenIssue(
+    """The data for the mutation"""
+    input: ReopenIssueInput
+  ): ReopenIssuePayload
+
+  """Changes the priority of an issue"""
+  changeIssuePriority(
+    """The data for the mutation"""
+    input: ChangeIssuePriorityInput
+  ): ChangeIssuePriorityPayload
+
+  """Changes the set start date on an issue"""
+  changeIssueStartDate(
+    """The data for the mutation"""
+    input: ChangeIssueStartDateInput
+  ): ChangeIssueStartDatePayload
+
+  """Changes the set due date on an issue"""
+  changeIssueDueDate(
+    """The data for the mutation"""
+    input: ChangeIssueDueDateInput
+  ): ChangeIssueDueDatePayload
+
+  """Changes the set estimated time on an issue"""
+  changeIssueEstimatedTime(
+    """The data for the mutation"""
+    input: ChangeIssueEstimatedTimeInput
+  ): ChangeIssueEstimatedTimePayload
+
+  """Adds an issue to a location (component or interface)"""
+  addIssueToLocation(
+    """The data for the mutation"""
+    input: AddIssueToLocationInput
+  ): AddIssueToLocationPayload
+
+  """Removes an issue from an issue location it was assigned to"""
+  removeIssueFromLocation(
+    """The data for the mutation"""
+    input: RemoveIssueFromLocationInput
+  ): RemoveIssueFromLocationPayload
+
+  """
+  Adds an issue to a component (including creating the issue on the ims of the component)
+  """
+  addIssueToComponent(
+    """The data for the mutation"""
+    input: AddIssueToComponentInput
+  ): AddIssueToComponentPayload
+
+  """
+  Removes an issue from a component it is currently assigned to and deletes it from the ims of the component
+  """
+  removeIssueFromComponent(
+    """The data for the mutation"""
+    input: RemoveIssueFromComponentInput
+  ): RemoveIssueFromComponentPayload
+
+  """Marks an issue as being a duplicate of another issue"""
+  markIssueAsDuplicate(
+    """The data for the mutation"""
+    input: MarkIssueAsDuplicateInput
+  ): MarkIssueAsDuplicatePayload
+
+  """Remove the marking on an issue that it is a duplicate of another issue"""
+  unmarkIssueAsDuplicate(
+    """The data for the mutation"""
+    input: UnmarkIssueAsDuplicateInput
+  ): UnmarkIssueAsDuplicatePayload
+
+  """
+  Adds a reaction by the current user to a comment (issue body or issue comment)
+  """
+  addReactionToComment(
+    """The data for the mutation"""
+    input: AddReactionToCommentInput
+  ): AddReactionToCommentPayload
+
+  """
+  Remove a reaction from a comment which was added by the current user (issue body or issue comment)
+  """
+  removeReactionFromComment(
+    """The data for the mutation"""
+    input: RemoveReactionFromCommentInput
+  ): RemoveReactionFromCommentPayload
+
+  """Creates a new project"""
+  createProject(
+    """The data for the mutation"""
+    input: CreateProjectInput
+  ): CreateProjectPayload
+
+  """Creates a new component"""
+  createComponent(
+    """The data for the mutation"""
+    input: CreateComponentInput
+  ): CreateComponentPayload
+
+  """Creates a new IMS"""
+  createIMS(
+    """The data for the mutation"""
+    input: CreateIMSInput
+  ): CreateIMSPayload
+
+  """Creates a new User"""
+  createUser(
+    """The data for the mutation"""
+    input: CreateUserInput
+  ): CreateUserPayload
+}
+
+"""The Payload/Response for the addIssueToLocation mutation"""
+type TestMutationPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+}
+
+"""The inputs for the testMutation"""
+input TestMutationInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+}
+
+"""The Payload/Response for the createIssue mutation"""
+type CreateIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The created issue node"""
+  issue: Issue
+}
+
+"""The inputs for the createIssue"""
+input CreateIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The human readable title for the new issue.
+  
+  This can't be `null`. Max. 256 caracters.
+  """
+  title: String!
+
+  """
+  The body text for the issue as markdown.
+  
+  This can be `null` (will result in an empty body). Max. 65536 characters
+  """
+  body: String
+
+  """
+  The IDs of the components the issue is mirrored to.
+  
+  At least one valid component must be given.
+  """
+  componentIDs: [ID!]!
+
+  """
+  The category to assign the issue to.
+  
+  If none is given, the issue wil have the category `UNCLASSIFIED`.
+  """
+  category: IssueCategory
+
+  """
+  A list of all label IDs to assign to the new issue.
+  
+  If `null`, none will be assigned.
+  """
+  labels: [ID!]
+
+  """
+  A list of user IDs to added as assignees to the issue.
+  
+  If `null`, no users will be assigned
+  """
+  assignees: [ID!]
+
+  """
+  A list of IDs of issue locations to add the issue to.
+  
+  If `null`, the issue will not be assigned to any locations
+  """
+  locations: [ID!]
+
+  """
+  The start date to be set for the issue.
+  
+  If `null`, none will be set
+  """
+  startDate: Date
+
+  """
+  The due date to be set for the issue.
+  
+  If `null`, none will be set
+  """
+  dueDate: Date
+
+  """
+  The estimated time to be set for the issue.
+  
+  If `null`, none will be set
+  """
+  estimatedTime: TimeSpan
+}
+
+"""The Payload/Response for the addIssueComment mutation"""
+type AddIssueCommentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """
+  The issue comment object that was created.
+  
+  __NOTE:__This is also the timeline event!
+  """
+  comment: IssueComment
+
+  """The issue to which the user was assigned"""
+  issue: Issue
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the addIssueComment"""
+input AddIssueCommentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to which to add a new comment"""
+  issue: ID!
+
+  """
+  The body text of the comment to be added.
+  
+  Max. 65536 characters.
+  """
+  body: String!
+}
+
+"""The Payload/Response for the deleteIssueComment mutation"""
+type DeleteIssueCommentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """
+  A replacement for the deleted comment to be shown in the GUI instead of the original comment for the completeness of the history
+  """
+  deletedComment: DeletedIssueComment
+
+  """The issue from which the comment was removed"""
+  issue: Issue
+
+  """The issue timeline event for the deletion of the comment"""
+  event: DeletedIssueComment
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the deleteIssueComment"""
+input DeleteIssueCommentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue comment to be deleted"""
+  issueComment: ID!
+}
+
+"""The Payload/Response for the linkIssue mutation"""
+type LinkIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """
+  The issue the `issue` was linked to (the __destination__ of the relation)
+  """
+  linkedIssue: Issue
+
+  """
+  The issue which was linked to the `linkedIssue` (the __origin__ of the relation)
+  """
+  issue: Issue
+
+  """The issue timeline event for the linking of the issues"""
+  event: LinkEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the linkIssue"""
+input LinkIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The ID of the issue to be linked to another one (the __origin__ of the relation)
+  """
+  issue: ID!
+
+  """
+  TheID of the issue to link the above issue to (the __destination__ of the relation)
+  """
+  issueToLink: ID!
+}
+
+"""The Payload/Response for the unlinkIssue mutation"""
+type UnlinkIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue which was unlinked (the former __origin__ of the relation)"""
+  issue: Issue
+
+  """The issue timeline event for the unlinking of the issue"""
+  event: UnlinkEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the unlinkIssue"""
+input UnlinkIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue which is the __origin__ of the relation"""
+  issue: ID!
+
+  """
+  The ID of the issue the link to which sholud be removed (destination of relation)
+  """
+  issueToUnlink: ID!
+}
+
+"""The Payload/Response for the addToIssueLabel mutation"""
+type AddLabelToIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The label that was added to the issue"""
+  label: Label
+
+  """The issue to which the specified label was added"""
+  issue: Issue
+
+  """
+  The issue timeline event for the labeling of the issue with the specified label
+  """
+  event: LabelledEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the addToIssueLabel"""
+input AddLabelToIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to which to add the label"""
+  issue: ID!
+
+  """The ID of the label to be added to the specified issue"""
+  label: ID!
+}
+
+"""The Payload/Response for the removeFromIssueLabel mutation"""
+type RemoveLabelFromIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The label that was removed from the issue"""
+  label: Label
+
+  """The issue from which the label was removed"""
+  issue: Issue
+
+  """The issue timeline event for the removal of the label from the issue"""
+  event: UnlabelledEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the removeFromIssueLabel"""
+input RemoveLabelFromIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue from which to remove a label"""
+  issue: ID!
+
+  """The ID of the label to remove from the specified issue"""
+  label: ID!
+}
+
+"""The Payload/Response for the pinIssue mutation"""
+type PinIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The component the issue was pinned to"""
+  component: Component
+
+  """The issue which removed from the location"""
+  issue: Issue
+
+  """The issue timeline event for the pinnine of the issue to the component"""
+  event: PinnedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the pinIssue"""
+input PinIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The id of the issue to pin"""
+  issue: ID!
+
+  """The component id where to pin the issue"""
+  component: ID!
+}
+
+"""The Payload/Response for the unpinIssue mutation"""
+type UnpinIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue which was unpinned by the performed mutation"""
+  issue: Issue
+
+  """The component the issue was unpinned from"""
+  component: Comment
+
+  """The issue timeline event for the unpinning of the issue"""
+  event: UnpinnedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the unpinIssue"""
+input UnpinIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The id of the issue to unpin"""
+  issue: ID!
+
+  """The component id where to pin the unissue"""
+  component: ID!
+}
+
+"""The Payload/Response for the renameIssueTitle mutation"""
+type RenameIssueTitlePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue which was renamed"""
+  issue: Issue
+
+  """The issue timeline event for the renaming of the issue"""
+  event: RenamedTitleEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the renameIssueTitle"""
+input RenameIssueTitleInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to rename (Change the title of)"""
+  issue: ID!
+
+  """The new title to set for the issue"""
+  newTitle: String!
+}
+
+"""The Payload/Response for the changeIssueCategory mutation"""
+type ChangeIssueCategoryPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue of whichthe category was changed"""
+  issue: Issue
+
+  """The issue timeline event for the changed category"""
+  event: CategoryChangedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the changeIssueCategory"""
+input ChangeIssueCategoryInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the for which to change the category"""
+  issue: ID!
+
+  """The new category to be set for the issue"""
+  newCategory: IssueCategory!
+}
+
+"""The Payload/Response for the addAssignee mutation"""
+type AddAssigneePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The user that was assigned to the issue"""
+  assignee: User
+
+  """The issue to which the user was assigned"""
+  issue: Issue
+
+  """The issue timeline event for the assigning of the user to the issue"""
+  event: AssignedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the addAssignee"""
+input AddAssigneeInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to which the new assignee should be added"""
+  issue: ID!
+
+  """The ID of the user to be added as assignee to the specified issue"""
+  userToAssign: ID!
+}
+
+"""The Payload/Response for the removeAssignee mutation"""
+type RemoveAssigneePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The user that was uassigned from the issue"""
+  user: User
+
+  """The issue from which the user was unassigned"""
+  issue: Issue
+
+  """The issue timeline event for the uassigning of the user from the issue"""
+  event: UnassignedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the removeAssignee"""
+input RemoveAssigneeInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue from which to remove an assignee"""
+  issue: ID!
+
+  """The ID of the user being unassigned from the specified issue"""
+  user: ID!
+}
+
+"""The Payload/Response for the closeIssue mutation"""
+type CloseIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue which was closed"""
+  issue: Issue
+
+  """The issue timeline event for the closing of the issue"""
+  event: ClosedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the closeIssue"""
+input CloseIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to be closed"""
+  issue: ID!
+}
+
+"""The Payload/Response for the reopenIssue mutation"""
+type ReopenIssuePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue which was reopened"""
+  issue: Issue
+
+  """The issue timeline event for the reopening of the issue"""
+  event: ReopenedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the reopenIssue"""
+input ReopenIssueInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The id of the issue to reopen"""
+  issue: ID!
+}
+
+"""The Payload/Response for the changeIssuePriority mutation"""
+type ChangeIssuePriorityPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue of which the priority was changed"""
+  issue: Issue
+
+  """The issue timeline event for the changed priority"""
+  event: PriorityChangedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the changeIssuePriority"""
+input ChangeIssuePriorityInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to change the priority of"""
+  issue: ID!
+
+  """The new priority to be set for the issue"""
+  newPriority: Priority!
+}
+
+"""The Payload/Response for the changeIssueStartDate mutation"""
+type ChangeIssueStartDatePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue of which the start date was updated"""
+  issue: Issue
+
+  """The issue timeline event for the changing start date"""
+  event: StartDateChangedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the changeIssueStartDate"""
+input ChangeIssueStartDateInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to change the start date of"""
+  issue: ID!
+
+  """The new start date to assign to the issue"""
+  newStartDate: Date!
+}
+
+"""The Payload/Response for the changeIssueDueDate mutation"""
+type ChangeIssueDueDatePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue of which the due date was changed"""
+  issue: Issue
+
+  """The issue timeline event for the changed due date"""
+  event: DueDateChangedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the changeIssueDueDate"""
+input ChangeIssueDueDateInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue of which to change the due date"""
+  issue: ID!
+
+  """The new due date to be set for the issue"""
+  newDueDate: Date!
+}
+
+"""The Payload/Response for the changeIssueEstimatedTime mutation"""
+type ChangeIssueEstimatedTimePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue of which the estimated time was changed"""
+  issue: Issue
+
+  """The issue timeline event for the changed estimated time"""
+  event: EstimatedTimeChangedEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the changeIssueEstimatedTime"""
+input ChangeIssueEstimatedTimeInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue for which to change the estimated time"""
+  issue: ID!
+
+  """The time span to be set as new estimated time for the issue"""
+  newEstimatedTime: TimeSpan!
+}
+
+"""The Payload/Response for the addIssueToLocation mutation"""
+type AddIssueToLocationPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The location the issue was added to"""
+  location: IssueLocation
+
+  """The issue which removed from the location"""
+  issue: Issue
+
+  """The issue timeline event for the addition of the issue to the location"""
+  event: AddedToLocationEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the addIssueToLocation"""
+input AddIssueToLocationInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to be added to the specified issue location"""
+  issue: ID!
+
+  """The ID of the issue location the issue should be added to"""
+  location: ID!
+}
+
+"""The Payload/Response for the removeIssueFromLocation mutation"""
+type RemoveIssueFromLocationPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue location the issue was removed from"""
+  location: IssueLocation
+
+  """The issue which removed from the location"""
+  issue: Issue
+
+  """
+  The issue timeline event for the removal of the issue from the location
+  """
+  event: RemovedFromLocationEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the removeIssueFromLocation"""
+input RemoveIssueFromLocationInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to remove from the specified location"""
+  issue: ID!
+
+  """The issue-location ID from which to remove the issue"""
+  location: ID!
+}
+
+"""The Payload/Response for the addIssueToComponent mutation"""
+type AddIssueToComponentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The component (with its IMS) to which the issue was added"""
+  component: Component
+
+  """The issue which added to the component and its IMS"""
+  issue: Issue
+
+  """
+  The issue timeline event for the addition of this issue to this component
+  """
+  event: AddedToComponentEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the addIssueToComponent"""
+input AddIssueToComponentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to be added to the specified component"""
+  issue: ID!
+
+  """The ID of the component the issue should be added to"""
+  location: ID!
+}
+
+"""The Payload/Response for the removeIssueFromComponent mutation"""
+type RemoveIssueFromComponentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """
+  The component the issue was removed from (including from the components IMS)
+  """
+  component: Component
+
+  """The issue which removed from the component"""
+  issue: Issue
+
+  """
+  The issue timeline event for the removal of the issue from the component
+  """
+  event: RemovedFromComponentEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the removeIssueFromComponent"""
+input RemoveIssueFromComponentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The ID of the issue to remove from the specified component
+  
+  (it will be deleted in the components IMS)
+  """
+  issue: ID!
+
+  """The ID of the component from which to remove the issue"""
+  component: ID!
+}
+
+"""The Payload/Response for the markIssueAsDuplicate mutation"""
+type MarkIssueAsDuplicatePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The original issue of which the `issue` was marked as a duplicate of"""
+  originalIssue: Issue
+
+  """The issue which is a duplicate of the `originalIssue`"""
+  issue: Issue
+
+  """The issue timeline event for marking the issue as a duplicate"""
+  event: MarkedAsDuplicateEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the markIssueAsDuplicate"""
+input MarkIssueAsDuplicateInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue to be marked as duplicate (the duplicate)"""
+  issue: ID!
+
+  """The ID of the issue the above one is a duplicate of (the original)"""
+  originalIssue: ID!
+}
+
+"""The Payload/Response for the unmarkIssueAsDuplicate mutation"""
+type UnmarkIssueAsDuplicatePayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The issue which was unmarked as duplicate"""
+  issue: Issue
+
+  """
+  The issue timeline event for the removal of the duplicate marking of the issue
+  """
+  event: UnmarkedAsDuplicateEvent
+
+  """
+  The edge to be able to request other timeline items from this timeline item
+  """
+  timelineEdge: IssueTimelineItemEdge
+}
+
+"""The inputs for the unmarkIssueAsDuplicate"""
+input UnmarkIssueAsDuplicateInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The ID of the issue which to unmark as duplicate"""
+  issue: ID!
+}
+
+"""The Payload/Response for the addToCommentReaction mutation"""
+type AddReactionToCommentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The comment the reaction was added to"""
+  comment: Comment
+
+  """
+  The group of users that all reacted to this comment with the same reaction
+  """
+  reaction: ReactionGroup
+}
+
+"""The inputs for the addToCommentReaction"""
+input AddReactionToCommentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The ID of the comment to which to add the specified reaction by the current user
+  """
+  comment: ID!
+
+  """
+  The name of the reaction to be added to the specified comment by the current user
+  """
+  reaction: String!
+}
+
+"""The Payload/Response for the removeFromCommentReaction mutation"""
+type RemoveReactionFromCommentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+}
+
+"""The inputs for the removeFromCommentReaction"""
+input RemoveReactionFromCommentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The ID of the comment from which to remove the specified reaction by the current user
+  """
+  comment: ID!
+
+  """The name of the reaction to remove from the given comment"""
+  reactionToRemove: String!
+}
+
+"""The Payload/Response for the createProject mutation"""
+type CreateProjectPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The project created by this mutation"""
+  project: Project
+}
+
+"""The inputs for the createProject mutation"""
+input CreateProjectInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The name of the project
+  
+  Max. 256 characters
+  """
+  name: String!
+
+  """
+  The description of the project
+  
+  Max. 65536 characters
+  """
+  description: String
+
+  """
+  The list of components for the project to be initialized with.
+  
+  If `null`, the peoject will contain no components (However, they can be added later)
+  """
+  components: [ID!]
+
+  """
+  The users which will initially be part of the project.
+  The owner will always be added.
+  
+  If `null`, only the owner will be added to the project
+  """
+  users: [ID!]
+
+  """
+  The owner user of this component. This user will be able to administrate the component
+  """
+  owner: ID!
+}
+
+"""The Payload/Response for the createComponent mutation"""
+type CreateComponentPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The component created by this mutation"""
+  component: Component
+}
+
+"""The inputs for the createComponent mutation"""
+input CreateComponentInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """
+  The (non unique) display name of this component
+  
+  Max. 256 characters
+  """
+  name: String!
+
+  """The ID of the user who administrates "owns" the component"""
+  owner: ID!
+
+  """
+  A textual description (of the fuction) of this component.
+  
+  Max. 65536 characters. `null` equivalent to ""
+  """
+  description: String
+
+  """
+  The IMS used by this component. This must be created before the component
+  
+  Can be `null`
+  """
+  ims: ID!
+
+  """
+  If given, the component will be added to the projects with those IDs.
+  
+  Can be `null`
+  """
+  projects: [ID!]
+
+  """
+  If given, the new component will consume the interfacs with the given IDs.
+  
+  Can be `null`
+  """
+  consumedInterfaces: [ID!]
+}
+
+"""The Payload/Response for the createIMS mutation"""
+type CreateIMSPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The IMS created by this mutation"""
+  ims: IMS
+}
+
+"""The inputs for the createIMS mutation"""
+input CreateIMSInput {
+  """An arbitraty string to return together with the mutation result"""
+  clientMutationID: String
+
+  """The type/system this IMS is an instance of"""
+  imsType: IMSType
+
+  """
+  The endpoint where to reach the IMS instance.
+              
+  In the most cases this will be a URL in the form of
+  ```
+  https://example.com/api/[API_KEY]
+  ```
+  where strings in [] can be replaced by the IMS extension with values needed 
+  (either dynamid, like the API key of a user or static, like values from the config). 
+  See the documentation for the IMS extions for information which keys are expected.
+  
+  In rare cases depending on the IMS type this might be empty or not a URL
+  """
+  endpoint: String
+
+  """
+  Data needed for the connection to the IMS API.
+              
+  See the documentation for the IMS extions for information which keys are expected.
+  This must be a valid JSON-string
+  """
+  connectionData: JSON
+}
+
+"""The Payload/Response for the createUser mutation"""
+type CreateUserPayload {
+  """The string provided by the client on sending the mutation"""
+  clientMutationID: String
+
+  """The user created by this mutation"""
+  user: User
+}
+
+"""The inputs for the createUser mutation"""
+input CreateUserInput {
+  """
+  The unique username used for login.
+  
+  Max. 100 characters.
+  """
+  username: String!
+
+  """
+  The name of the user to display in the GUI.
+  
+  Max. 200 characters.
+  """
+  displayName: String!
+
+  """The password for the new user in plain text"""
+  password: String!
+
+  """
+  The mail address of the user.
+  
+  Max. 320 characters. Must be a valid email address
+  """
+  email: String
+
+  """
+  If given, the user will be added to the projects with those IDs immediately after creation
+  """
+  projects: [ID!]
 }
